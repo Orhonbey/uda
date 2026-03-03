@@ -1,19 +1,21 @@
 import { Command } from 'commander';
+import { initProject } from './core/init.js';
 
 export function createCli() {
   const program = new Command();
-
-  program
-    .name('uda')
-    .description('Universal Dev AI — AI-agnostic context engineering + RAG')
-    .version('0.1.0');
 
   program
     .command('init')
     .description('Initialize UDA in current project')
     .option('-e, --engine <name>', 'Engine plugin to install (e.g. unity)')
     .action(async (options) => {
-      console.log('uda init — not yet implemented');
+      const root = process.cwd();
+      const paths = await initProject(root);
+      console.log('✔ .uda/ directory created');
+
+      if (options.engine) {
+        console.log(`Engine: ${options.engine} — plugin install not yet implemented`);
+      }
     });
 
   program
