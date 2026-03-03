@@ -1,0 +1,28 @@
+{
+  "name": "uda",
+  "version": "0.1.0",
+  "description": "Universal Dev AI — AI-agnostic context engineering + RAG for game development",
+  "type": "module",
+  "bin": {
+    "uda": "./bin/uda.js"
+  },
+  "scripts": {
+    "test": "node --test src/**/*.test.js",
+    "dev": "node bin/uda.js"
+  },
+  "keywords": [
+    "ai",
+    "context-engineering",
+    "rag",
+    "game-dev",
+    "unity",
+    "cli"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "commander": "^14.0.3"
+  }
+}
