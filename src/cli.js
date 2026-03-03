@@ -1,5 +1,8 @@
 import { Command } from 'commander';
 import { initProject } from './core/init.js';
+import { handleLearn } from './commands/learn.js';
+import { handleSearch } from './commands/search.js';
+import { handleScan } from './commands/scan.js';
 
 export function createCli() {
   const program = new Command();
@@ -30,25 +33,19 @@ export function createCli() {
     .description('Search knowledge base')
     .option('-t, --top <number>', 'Number of results', '5')
     .option('-f, --format <format>', 'Output format (terminal, md, clipboard)', 'terminal')
-    .action(async (query, options) => {
-      console.log('uda search — not yet implemented');
-    });
+    .action(handleSearch);
 
   program
     .command('learn <source>')
     .description('Teach knowledge to RAG')
     .option('--type <type>', 'Knowledge type (bug-fix, feature, pattern, knowledge)', 'knowledge')
     .option('--tags <tags>', 'Comma-separated tags')
-    .action(async (source, options) => {
-      console.log('uda learn — not yet implemented');
-    });
+    .action(handleLearn);
 
   program
     .command('scan')
     .description('Scan project and index into RAG')
-    .action(async () => {
-      console.log('uda scan — not yet implemented');
-    });
+    .action(handleScan);
 
   const pluginCmd = program
     .command('plugin')
