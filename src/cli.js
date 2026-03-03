@@ -3,6 +3,7 @@ import { initProject } from './core/init.js';
 import { handleLearn } from './commands/learn.js';
 import { handleSearch } from './commands/search.js';
 import { handleScan } from './commands/scan.js';
+import { handleSync } from './commands/sync.js';
 
 export function createCli() {
   const program = new Command();
@@ -24,9 +25,7 @@ export function createCli() {
   program
     .command('sync')
     .description('Generate AI tool files from knowledge base')
-    .action(async () => {
-      console.log('uda sync — not yet implemented');
-    });
+    .action(handleSync);
 
   program
     .command('search <query>')
