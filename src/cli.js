@@ -1,9 +1,9 @@
 import { Command } from 'commander';
-import { initProject } from './core/init.js';
 import { handleLearn } from './commands/learn.js';
 import { handleSearch } from './commands/search.js';
 import { handleScan } from './commands/scan.js';
 import { handleSync } from './commands/sync.js';
+import { handleInit } from './commands/init.js';
 import { handlePluginAdd, handlePluginList, handlePluginRemove } from './commands/plugin.js';
 
 export function createCli() {
@@ -13,15 +13,7 @@ export function createCli() {
     .command('init')
     .description('Initialize UDA in current project')
     .option('-e, --engine <name>', 'Engine plugin to install (e.g. unity)')
-    .action(async (options) => {
-      const root = process.cwd();
-      const paths = await initProject(root);
-      console.log('✔ .uda/ directory created');
-
-      if (options.engine) {
-        console.log(`Engine: ${options.engine} — plugin install not yet implemented`);
-      }
-    });
+    .action(handleInit);
 
   program
     .command('sync')
