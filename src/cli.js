@@ -5,6 +5,7 @@ import { handleScan } from './commands/scan.js';
 import { handleSync } from './commands/sync.js';
 import { handleInit } from './commands/init.js';
 import { handlePluginAdd, handlePluginList, handlePluginRemove } from './commands/plugin.js';
+import { handleStatus } from './commands/status.js';
 
 export function createCli() {
   const program = new Command();
@@ -84,9 +85,7 @@ export function createCli() {
   program
     .command('status')
     .description('Show UDA system status')
-    .action(async () => {
-      console.log('uda status — not yet implemented');
-    });
+    .action(handleStatus);
 
   program
     .command('config')
