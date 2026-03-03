@@ -4,6 +4,7 @@ import { handleLearn } from './commands/learn.js';
 import { handleSearch } from './commands/search.js';
 import { handleScan } from './commands/scan.js';
 import { handleSync } from './commands/sync.js';
+import { handlePluginAdd, handlePluginList, handlePluginRemove } from './commands/plugin.js';
 
 export function createCli() {
   const program = new Command();
@@ -53,23 +54,17 @@ export function createCli() {
   pluginCmd
     .command('add <repo>')
     .description('Install plugin from git repo')
-    .action(async (repo) => {
-      console.log('uda plugin add — not yet implemented');
-    });
+    .action(handlePluginAdd);
 
   pluginCmd
     .command('list')
     .description('List installed plugins')
-    .action(async () => {
-      console.log('uda plugin list — not yet implemented');
-    });
+    .action(handlePluginList);
 
   pluginCmd
     .command('remove <name>')
     .description('Remove a plugin')
-    .action(async (name) => {
-      console.log('uda plugin remove — not yet implemented');
-    });
+    .action(handlePluginRemove);
 
   pluginCmd
     .command('update [name]')
