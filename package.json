@@ -3,9 +3,16 @@
   "version": "0.1.0",
   "description": "Universal Dev AI — AI-agnostic context engineering + RAG for game development",
   "type": "module",
+  "main": "./src/cli.js",
   "bin": {
     "uda": "./bin/uda.js"
   },
+  "files": [
+    "bin/",
+    "src/",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "test": "node --test src/**/*.test.js",
     "dev": "node bin/uda.js"
@@ -16,8 +23,13 @@
     "rag",
     "game-dev",
     "unity",
-    "cli"
+    "godot",
+    "unreal",
+    "cli",
+    "vector-database",
+    "embeddings"
   ],
+  "author": "UDA Contributors",
   "license": "MIT",
   "engines": {
     "node": ">=18.0.0"
