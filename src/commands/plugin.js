@@ -25,3 +25,22 @@ export async function handlePluginRemove(name) {
   const meta = await pm.remove(name);
   console.log(`✔ Plugin "${meta.name}" removed`);
 }
+
+export async function handlePluginUpdate(name) {
+  const pm = new PluginManager(process.cwd());
+
+  if (name) {
+    const result = await pm.update(name);
+    console.log(`✔ Plugin "${result.name}" updated (${result.commitHash?.slice(0, 7) || 'latest'})`);
+  } else {
+    const results = await pm.updateAll();
+    if (results.length === 0) {
+      console.log('No plugins installed.');
+      return;
+    }
+    for (const r of results) {
+      console.log(`  ✔ ${r.name} updated (${r.commitHash?.slice(0, 7) || 'latest'})`);
+    }
+    console.log(`\n✔ ${results.length} plugin(s) updated`);
+  }
+}

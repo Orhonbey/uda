@@ -2,6 +2,7 @@
 import { readFile, readdir, access } from 'fs/promises';
 import { join } from 'path';
 import { udaPaths } from '../core/constants.js';
+import { loadConfig } from '../core/config.js';
 import { VectorStore } from '../rag/store.js';
 
 export async function handleStatus() {
@@ -16,7 +17,7 @@ export async function handleStatus() {
     return;
   }
 
-  const config = JSON.parse(await readFile(paths.config, 'utf8'));
+  const config = await loadConfig(root);
   console.log(`UDA v${config.version}\n`);
 
   // Plugins

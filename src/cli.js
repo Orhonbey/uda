@@ -6,6 +6,9 @@ import { handleSync } from './commands/sync.js';
 import { handleInit } from './commands/init.js';
 import { handlePluginAdd, handlePluginList, handlePluginRemove } from './commands/plugin.js';
 import { handleStatus } from './commands/status.js';
+import { handleConfig } from './commands/config.js';
+import { handlePluginUpdate } from './commands/plugin.js';
+import { handleExport } from './commands/export.js';
 
 export function createCli() {
   const program = new Command();
@@ -62,9 +65,7 @@ export function createCli() {
   pluginCmd
     .command('update [name]')
     .description('Update plugin(s)')
-    .action(async (name) => {
-      console.log('uda plugin update — not yet implemented');
-    });
+    .action(handlePluginUpdate);
 
   pluginCmd
     .command('create <name>')
@@ -76,11 +77,9 @@ export function createCli() {
   program
     .command('export')
     .description('Export knowledge to specific format')
-    .requiredOption('-f, --format <format>', 'Output format (claude, cursor, windsurf, agents-md, raw)')
-    .option('-o, --output <path>', 'Output file path')
-    .action(async (options) => {
-      console.log('uda export — not yet implemented');
-    });
+    .requiredOption('-f, --format <format>', 'Output format (claude, cursor, agents-md, raw)')
+    .option('-o, --output <path>', 'Output directory')
+    .action(handleExport);
 
   program
     .command('status')
@@ -92,9 +91,7 @@ export function createCli() {
     .description('Manage UDA settings')
     .argument('[key]', 'Config key to get/set')
     .argument('[value]', 'Value to set')
-    .action(async (key, value) => {
-      console.log('uda config — not yet implemented');
-    });
+    .action(handleConfig);
 
   return program;
 }

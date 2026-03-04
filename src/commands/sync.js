@@ -1,7 +1,9 @@
 // src/commands/sync.js
-import { readFile, writeFile, mkdir } from 'fs/promises';
+import { writeFile, mkdir } from 'fs/promises';
 import { join, dirname } from 'path';
 import { udaPaths } from '../core/constants.js';
+import { loadConfig } from '../core/config.js';
+import { loadKnowledge, loadWorkflows, loadAgents } from '../core/knowledge-loader.js';
 import { ClaudeAdapter } from '../adapters/claude.js';
 import { CursorAdapter } from '../adapters/cursor.js';
 import { RawAdapter } from '../adapters/raw.js';
@@ -19,7 +21,7 @@ export async function handleSync() {
   const paths = udaPaths(root);
 
   // Load knowledge from .uda/
-  const config = JSON.parse(await readFile(paths.config, 'utf8'));
+  const config = await loadConfig(root);
   const knowledge = await loadKnowledge(paths);
   const workflows = await loadWorkflows(paths);
   const agents = await loadAgents(paths);
@@ -45,35 +47,3 @@ export async function handleSync() {
   console.log(`\n✔ Sync complete: ${totalFiles} files generated`);
 }
 
-async function loadKnowledge(paths) {
-  // Minimal implementation — reads project profile if exists
-  const knowledge = { project: {}, conventions: [], decisions: [] };
-
-  try {
-    const profile = await readFile(join(paths.knowledge.project, 'profile.md'), 'utf8');
-    // Simple parse — extract key-value pairs from markdown
-    const nameMatch = profile.match(/Project:\s*(.+)/i);
-    const engineMatch = profile.match(/Engine:\s*(.+)/i);
-    if (nameMatch) knowledge.project.name = nameMatch[1].trim();
-    if (engineMatch) knowledge.project.engine = engineMatch[1].trim();
-  } catch { /* no profile yet */ }
-
-  try {
-    const decisions = await readFile(join(paths.knowledge.project, 'decisions.md'), 'utf8');
-    knowledge.decisions = decisions.split('\n')
-      .filter(l => l.startsWith('- '))
-      .map(l => l.slice(2));
-  } catch { /* no decisions yet */ }
-
-  return knowledge;
-}
-
-async function loadWorkflows(paths) {
-  // Will load YAML files in Phase 5 — for now return empty
-  return [];
-}
-
-async function loadAgents(paths) {
-  // Will load agent markdown files — for now return empty
-  return [];
-}
