@@ -17,6 +17,10 @@ export class PluginManager {
       // Clone repo
       await git.clone(repoUrl, tmpDir, ['--depth', '1']);
 
+      // Get commit hash
+      const log = await git.cwd(tmpDir).log(['-1']);
+      const commitHash = log.latest?.hash || 'unknown';
+
       // Read manifest
       const manifest = JSON.parse(await readFile(join(tmpDir, 'manifest.json'), 'utf8'));
       const pluginName = manifest.name;
@@ -40,6 +44,7 @@ export class PluginManager {
         ...manifest,
         repo: repoUrl,
         installedAt: new Date().toISOString(),
+        commitHash,
       };
       await writeFile(
         join(this.paths.plugins, `${manifest.engine || pluginName}.json`),
@@ -80,6 +85,32 @@ export class PluginManager {
     await rm(metaPath);
 
     return meta;
+  }
+
+  async update(name) {
+    const metaPath = join(this.paths.plugins, `${name}.json`);
+    const meta = JSON.parse(await readFile(metaPath, 'utf8'));
+
+    // Remove old files and metadata
+    await this.remove(name);
+
+    // Re-add from repo
+    const newManifest = await this.add(meta.repo);
+
+    return { old: meta, new: newManifest };
+  }
+
+  async updateAll() {
+    const plugins = await this.list();
+    const results = [];
+
+    for (const plugin of plugins) {
+      const name = plugin.engine || plugin.name;
+      const result = await this.update(name);
+      results.push({ name, ...result });
+    }
+
+    return results;
   }
 }
 
