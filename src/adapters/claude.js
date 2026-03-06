@@ -12,19 +12,15 @@ export class ClaudeAdapter {
     );
   }
 
-  generate(knowledge, workflows, agents, projectRoot) {
+  generate(knowledge, workflows, agents, projectRoot, capabilities = {}) {
     const files = {};
+    files['CLAUDE.md'] = this._generateClaudeMd(knowledge, workflows, capabilities);
 
-    // Generate CLAUDE.md
-    files['CLAUDE.md'] = this._generateClaudeMd(knowledge, workflows);
-
-    // Generate skills
     for (const wf of workflows) {
       const skillPath = `.claude/commands/uda/${wf.name}.md`;
       files[skillPath] = this._generateSkill(wf);
     }
 
-    // Generate agents
     for (const agent of agents) {
       const agentPath = `.claude/agents/uda-${agent.name}.md`;
       files[agentPath] = this._generateAgent(agent);
@@ -33,9 +29,10 @@ export class ClaudeAdapter {
     return files;
   }
 
-  _generateClaudeMd(knowledge, workflows) {
+  _generateClaudeMd(knowledge, workflows, capabilities) {
     const lines = ['# CLAUDE.md', ''];
 
+    // Project info
     if (knowledge.project) {
       lines.push('## Project Info');
       if (knowledge.project.name) lines.push(`- **Project**: ${knowledge.project.name}`);
@@ -46,23 +43,51 @@ export class ClaudeAdapter {
 
     if (knowledge.conventions?.length > 0) {
       lines.push('## Conventions');
-      for (const conv of knowledge.conventions) {
-        lines.push(`- ${conv}`);
-      }
+      for (const conv of knowledge.conventions) lines.push(`- ${conv}`);
       lines.push('');
     }
 
     if (knowledge.decisions?.length > 0) {
       lines.push('## Architectural Decisions');
-      for (const dec of knowledge.decisions) {
-        lines.push(`- ${dec}`);
-      }
+      for (const dec of knowledge.decisions) lines.push(`- ${dec}`);
       lines.push('');
     }
 
+    // UDA AI-native instructions
+    lines.push('## UDA (Universal Dev AI)');
+    lines.push('');
+    lines.push('This project uses UDA for AI-assisted development. Follow these rules:');
+    lines.push('');
+
+    // Knowledge base instructions
+    lines.push('### Knowledge Base');
+    lines.push('- Engine knowledge is in `.uda/knowledge/`');
+    lines.push('- For engine questions, check these files FIRST');
+    lines.push('- For broader searches: `npx uda-cli search "query"`');
+    lines.push('');
+
+    // Log instructions (only if capability exists)
+    if (capabilities.logs) {
+      lines.push('### Console Logs');
+      lines.push(`- Log file: \`${capabilities.logs.source || '.uda/logs/console.jsonl'}\``);
+      lines.push('- Read logs: `npx uda-cli logs --errors --last 50`');
+      lines.push('- When user mentions logs, errors, or console issues, run this command');
+      lines.push('');
+    }
+
+    // Available commands
+    lines.push('### Available Commands');
+    lines.push('- `npx uda-cli search "query"` — search knowledge base');
+    if (capabilities.logs) {
+      lines.push('- `npx uda-cli logs [--errors|--warnings] [--last N]` — read engine logs');
+    }
+    lines.push('- `npx uda-cli plugin add <repo>` — add new plugin');
+    lines.push('- `npx uda-cli sync` — regenerate AI tool files');
+    lines.push('');
+
+    // Workflow skills
     if (workflows.length > 0) {
-      lines.push('## UDA Commands');
-      lines.push('This project uses UDA (Universal Dev AI).');
+      lines.push('### UDA Skills');
       for (const wf of workflows) {
         lines.push(`- \`/uda:${wf.name}\` — ${wf.description}`);
       }
