@@ -1,5 +1,5 @@
 // src/commands/sync.js
-import { writeFile, mkdir } from 'fs/promises';
+import { readFile, writeFile, mkdir, readdir } from 'fs/promises';
 import { join, dirname } from 'path';
 import { udaPaths } from '../core/constants.js';
 import { loadConfig } from '../core/config.js';
@@ -20,7 +20,6 @@ export async function handleSync() {
   const root = process.cwd();
   const paths = udaPaths(root);
 
-  // Load knowledge from .uda/
   let config, knowledge, workflows, agents;
   try {
     config = await loadConfig(root);
@@ -34,7 +33,9 @@ export async function handleSync() {
     return;
   }
 
-  // Determine which adapters to run
+  // Load merged capabilities from all installed plugins
+  const capabilities = await loadCapabilities(paths);
+
   const adapterList = Array.isArray(config.adapters) ? config.adapters : [];
   const activeAdapters = adapterList.length > 0
     ? ALL_ADAPTERS.filter(a => adapterList.includes(a.name))
@@ -49,7 +50,7 @@ export async function handleSync() {
 
   for (const adapter of activeAdapters) {
     try {
-      const files = adapter.generate(knowledge, workflows, agents, root);
+      const files = adapter.generate(knowledge, workflows, agents, root, capabilities);
       for (const [filePath, content] of Object.entries(files)) {
         const fullPath = join(root, filePath);
         await mkdir(dirname(fullPath), { recursive: true });
@@ -65,3 +66,19 @@ export async function handleSync() {
   console.log(`\n✔ Sync complete: ${totalFiles} files generated`);
 }
 
+async function loadCapabilities(paths) {
+  const merged = {};
+  try {
+    const files = await readdir(paths.plugins);
+    for (const f of files) {
+      if (!f.endsWith('.json')) continue;
+      try {
+        const meta = JSON.parse(await readFile(join(paths.plugins, f), 'utf8'));
+        if (meta.capabilities) {
+          Object.assign(merged, meta.capabilities);
+        }
+      } catch { /* skip malformed */ }
+    }
+  } catch { /* no plugins dir */ }
+  return merged;
+}

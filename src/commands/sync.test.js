@@ -72,4 +72,24 @@ describe('handleSync integration', () => {
     process.chdir(savedCwd);
     await rm(uninitDir, { recursive: true, force: true });
   });
+
+  it('passes plugin capabilities to claude adapter', async () => {
+    // Install a fake plugin with capabilities
+    const pluginsDir = join(testDir, '.uda', 'plugins');
+    await writeFile(join(pluginsDir, 'unity.json'), JSON.stringify({
+      name: 'uda-unity',
+      engine: 'unity',
+      capabilities: {
+        logs: { source: '.uda/logs/console.jsonl' },
+        knowledge: true,
+      },
+    }));
+
+    const { handleSync } = await import('./sync.js?t=cap');
+    await handleSync();
+
+    const claudeMd = await readFile(join(testDir, 'CLAUDE.md'), 'utf8');
+    assert.ok(claudeMd.includes('npx uda-cli logs'));
+    assert.ok(claudeMd.includes('.uda/knowledge/'));
+  });
 });
