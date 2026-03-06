@@ -11,6 +11,7 @@ import {
   validateSearchQuery,
   validatePositiveInt,
   validateSearchFormat,
+  validateManifest,
 } from './validators.js';
 
 describe('validateEngine', () => {
@@ -250,5 +251,68 @@ describe('validateSearchFormat', () => {
 
   it('rejects non-string values', () => {
     assert.strictEqual(validateSearchFormat(null).valid, false);
+  });
+});
+
+describe('validateManifest', () => {
+  it('accepts valid manifest with capabilities', () => {
+    const manifest = {
+      name: 'uda-unity',
+      version: '1.0.0',
+      engine: 'unity',
+      uda_version: '>=0.2.0',
+    };
+    const result = validateManifest(manifest);
+    assert.strictEqual(result.valid, true);
+  });
+
+  it('rejects manifest missing name', () => {
+    const result = validateManifest({ version: '1.0.0', engine: 'unity', uda_version: '>=0.2.0' });
+    assert.strictEqual(result.valid, false);
+    assert.ok(result.error.includes('name'));
+  });
+
+  it('rejects manifest missing version', () => {
+    const result = validateManifest({ name: 'test', engine: 'unity', uda_version: '>=0.2.0' });
+    assert.strictEqual(result.valid, false);
+    assert.ok(result.error.includes('version'));
+  });
+
+  it('rejects manifest missing engine', () => {
+    const result = validateManifest({ name: 'test', version: '1.0.0', uda_version: '>=0.2.0' });
+    assert.strictEqual(result.valid, false);
+    assert.ok(result.error.includes('engine'));
+  });
+
+  it('rejects manifest missing uda_version', () => {
+    const result = validateManifest({ name: 'test', version: '1.0.0', engine: 'unity' });
+    assert.strictEqual(result.valid, false);
+    assert.ok(result.error.includes('uda_version'));
+  });
+
+  it('accepts capabilities object', () => {
+    const manifest = {
+      name: 'uda-unity',
+      version: '1.0.0',
+      engine: 'unity',
+      uda_version: '>=0.2.0',
+      capabilities: {
+        logs: { source: '.uda/logs/console.jsonl', bridge: 'editor/LogBridge.cs', install_to: 'Assets/Editor/' },
+        knowledge: true,
+        workflows: true,
+      },
+    };
+    const result = validateManifest(manifest);
+    assert.strictEqual(result.valid, true);
+  });
+
+  it('rejects logs capability missing source', () => {
+    const manifest = {
+      name: 'test', version: '1.0.0', engine: 'unity', uda_version: '>=0.2.0',
+      capabilities: { logs: { bridge: 'x.cs' } },
+    };
+    const result = validateManifest(manifest);
+    assert.strictEqual(result.valid, false);
+    assert.ok(result.error.includes('source'));
   });
 });

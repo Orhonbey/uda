@@ -95,4 +95,29 @@ export function validateSearchFormat(format) {
   return { valid: true };
 }
 
+const MANIFEST_REQUIRED = ['name', 'version', 'engine', 'uda_version'];
+
+export function validateManifest(manifest) {
+  if (!manifest || typeof manifest !== 'object') {
+    return { valid: false, error: 'Manifest must be a JSON object.' };
+  }
+
+  for (const field of MANIFEST_REQUIRED) {
+    if (!manifest[field] || typeof manifest[field] !== 'string') {
+      return { valid: false, error: `Manifest must include a "${field}" string field.` };
+    }
+  }
+
+  if (manifest.capabilities && typeof manifest.capabilities === 'object') {
+    const caps = manifest.capabilities;
+    if (caps.logs && typeof caps.logs === 'object') {
+      if (!caps.logs.source || typeof caps.logs.source !== 'string') {
+        return { valid: false, error: 'Capability "logs" must include a "source" path string.' };
+      }
+    }
+  }
+
+  return { valid: true };
+}
+
 export { VALID_ENGINES, VALID_LEARN_TYPES, VALID_EXPORT_FORMATS, VALID_SEARCH_FORMATS };
