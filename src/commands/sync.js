@@ -21,27 +21,45 @@ export async function handleSync() {
   const paths = udaPaths(root);
 
   // Load knowledge from .uda/
-  const config = await loadConfig(root);
-  const knowledge = await loadKnowledge(paths);
-  const workflows = await loadWorkflows(paths);
-  const agents = await loadAgents(paths);
+  let config, knowledge, workflows, agents;
+  try {
+    config = await loadConfig(root);
+    knowledge = await loadKnowledge(paths);
+    workflows = await loadWorkflows(paths);
+    agents = await loadAgents(paths);
+  } catch (err) {
+    console.error(`✘ Failed to load project data: ${err.message}`);
+    console.error('  Run `uda init` to initialize the project.');
+    process.exitCode = 1;
+    return;
+  }
 
   // Determine which adapters to run
-  const activeAdapters = config.adapters
-    ? ALL_ADAPTERS.filter(a => config.adapters.includes(a.name))
+  const adapterList = Array.isArray(config.adapters) ? config.adapters : [];
+  const activeAdapters = adapterList.length > 0
+    ? ALL_ADAPTERS.filter(a => adapterList.includes(a.name))
     : ALL_ADAPTERS;
+
+  if (activeAdapters.length === 0) {
+    console.log('No matching adapters found. Check config.adapters setting.');
+    return;
+  }
 
   let totalFiles = 0;
 
   for (const adapter of activeAdapters) {
-    const files = adapter.generate(knowledge, workflows, agents, root);
-    for (const [filePath, content] of Object.entries(files)) {
-      const fullPath = join(root, filePath);
-      await mkdir(dirname(fullPath), { recursive: true });
-      await writeFile(fullPath, content);
-      totalFiles++;
+    try {
+      const files = adapter.generate(knowledge, workflows, agents, root);
+      for (const [filePath, content] of Object.entries(files)) {
+        const fullPath = join(root, filePath);
+        await mkdir(dirname(fullPath), { recursive: true });
+        await writeFile(fullPath, content);
+        totalFiles++;
+      }
+      console.log(`  ✔ ${adapter.name} adapter — ${Object.keys(files).length} files`);
+    } catch (err) {
+      console.error(`  ✘ ${adapter.name} adapter failed: ${err.message}`);
     }
-    console.log(`  ✔ ${adapter.name} adapter — ${Object.keys(files).length} files`);
   }
 
   console.log(`\n✔ Sync complete: ${totalFiles} files generated`);

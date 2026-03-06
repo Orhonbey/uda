@@ -1,15 +1,32 @@
 import { initProject } from '../core/init.js';
 import { handleScan } from './scan.js';
 import { handleSync } from './sync.js';
+import { validateEngine } from '../core/validators.js';
 
 export async function handleInit(options) {
   const root = process.cwd();
+
+  // Validate engine option if provided
+  if (options.engine) {
+    const v = validateEngine(options.engine);
+    if (!v.valid) {
+      console.error(`✘ ${v.error}`);
+      process.exitCode = 1;
+      return;
+    }
+  }
 
   console.log('UDA v0.1.0\n');
 
   // Step 1: Create directory structure
   console.log('Creating project structure...');
-  await initProject(root);
+  try {
+    await initProject(root);
+  } catch (err) {
+    console.error(`✘ Failed to create project structure: ${err.message}`);
+    process.exitCode = 1;
+    return;
+  }
   console.log('✔ .uda/ directory created\n');
 
   // Step 2: Engine detection
