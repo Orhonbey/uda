@@ -1,11 +1,12 @@
 // src/plugins/manager.test.js
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert';
-import { mkdtemp, rm, mkdir, writeFile } from 'fs/promises';
+import { mkdtemp, rm, mkdir, writeFile, readFile } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { PluginManager } from './manager.js';
 import { simpleGit } from 'simple-git';
+import { validateManifest } from '../core/validators.js';
 
 describe('PluginManager', () => {
   let testDir;
@@ -42,13 +43,18 @@ describe('PluginManager', () => {
     await mkdir(join(fakeRepoDir, 'workflows'), { recursive: true });
     await mkdir(join(fakeRepoDir, 'agents'), { recursive: true });
     
-    // Create manifest.json
+    // Create manifest.json with uda_version (required in v0.2.0)
     await writeFile(
       join(fakeRepoDir, 'manifest.json'),
       JSON.stringify({
         name: 'test-plugin',
         version: '1.0.0',
-        engine: 'unity'
+        engine: 'unity',
+        uda_version: '>=0.2.0',
+        capabilities: {
+          logs: { source: '.uda/logs/console.jsonl' },
+          knowledge: true,
+        },
       })
     );
     
@@ -127,5 +133,58 @@ describe('PluginManager', () => {
     
     const plugins = await pluginManager.list();
     assert.ok(!plugins.some(p => p.name === 'test-plugin'), 'Plugin should be removed');
+  });
+
+  it('rejects plugin with invalid manifest', async () => {
+    // Create a new fake repo with invalid manifest
+    const invalidRepoDir = await mkdtemp(join(tmpdir(), 'uda-invalid-repo-'));
+    const git = simpleGit(invalidRepoDir);
+    await git.init();
+    await git.addConfig('user.email', 'test@test.com');
+    await git.addConfig('user.name', 'Test User');
+
+    // Create manifest missing required fields
+    await writeFile(
+      join(invalidRepoDir, 'manifest.json'),
+      JSON.stringify({ name: 'invalid-plugin' }) // missing version, engine, uda_version
+    );
+
+    await git.add('.');
+    await git.commit('Initial commit');
+
+    // Create a fresh plugin manager
+    const testDir2 = await mkdtemp(join(tmpdir(), 'uda-plugin-test2-'));
+    const udaDir2 = join(testDir2, '.uda');
+    await mkdir(join(udaDir2, 'knowledge', 'engine'), { recursive: true });
+    await mkdir(join(udaDir2, 'workflows'), { recursive: true });
+    await mkdir(join(udaDir2, 'agents'), { recursive: true });
+    await mkdir(join(udaDir2, 'plugins'), { recursive: true });
+    await writeFile(join(udaDir2, 'config.json'), JSON.stringify({ version: '0.1.0' }));
+
+    const pm2 = new PluginManager(testDir2);
+
+    try {
+      await pm2.add(invalidRepoDir);
+      assert.fail('Should have thrown an error for invalid manifest');
+    } catch (err) {
+      assert.ok(err.message.includes('Invalid plugin manifest'), `Error message should mention invalid manifest: ${err.message}`);
+    }
+
+    await rm(testDir2, { recursive: true, force: true });
+    await rm(invalidRepoDir, { recursive: true, force: true });
+  });
+
+  it('saves capabilities from manifest to plugin metadata', async () => {
+    // Re-add the plugin with capabilities
+    const manifest = await pluginManager.add(fakeRepoDir);
+    
+    // Check that capabilities are saved in the metadata
+    const plugins = await pluginManager.list();
+    const plugin = plugins.find(p => p.name === 'test-plugin');
+    
+    assert.ok(plugin, 'Plugin should be in list');
+    assert.ok(plugin.capabilities, 'Plugin should have capabilities');
+    assert.ok(plugin.capabilities.logs, 'Capabilities should include logs');
+    assert.strictEqual(plugin.capabilities.logs.source, '.uda/logs/console.jsonl');
   });
 });

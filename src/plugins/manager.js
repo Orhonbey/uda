@@ -2,6 +2,7 @@ import { simpleGit } from 'simple-git';
 import { readFile, writeFile, rm, readdir, mkdir, cp } from 'fs/promises';
 import { join, basename } from 'path';
 import { udaPaths } from '../core/constants.js';
+import { validateManifest } from '../core/validators.js';
 
 export class PluginManager {
   constructor(projectRoot) {
@@ -36,9 +37,12 @@ export class PluginManager {
         throw new Error(`Plugin manifest.json contains invalid JSON: ${err.message}`);
       }
 
-      if (!manifest.name || typeof manifest.name !== 'string') {
-        throw new Error('Plugin manifest.json must include a "name" field');
+      // Validate manifest
+      const validation = validateManifest(manifest);
+      if (!validation.valid) {
+        throw new Error(`Invalid plugin manifest: ${validation.error}`);
       }
+
       const pluginName = manifest.name;
 
       // Copy knowledge files
@@ -54,6 +58,14 @@ export class PluginManager {
       // Copy agents
       const agentDir = join(tmpDir, 'agents');
       await cpDir(agentDir, this.paths.agents);
+
+      // Copy editor files (e.g., UdaLogBridge.cs → Assets/Editor/)
+      if (manifest.capabilities?.logs?.bridge && manifest.capabilities?.logs?.install_to) {
+        const bridgeSrc = join(tmpDir, manifest.capabilities.logs.bridge);
+        const bridgeDest = join(this.root, manifest.capabilities.logs.install_to);
+        await mkdir(bridgeDest, { recursive: true });
+        await cp(bridgeSrc, join(bridgeDest, basename(manifest.capabilities.logs.bridge)));
+      }
 
       // Save plugin metadata
       const pluginMeta = {
