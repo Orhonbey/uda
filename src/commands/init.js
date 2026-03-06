@@ -16,7 +16,7 @@ export async function handleInit(options) {
     }
   }
 
-  console.log('UDA v0.1.0\n');
+  console.log('UDA v0.2.0\n');
 
   // Step 1: Create directory structure
   console.log('Creating project structure...');
