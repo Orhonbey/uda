@@ -29,5 +29,6 @@ export function udaPaths(root) {
     },
     plugins: join(uda, 'plugins'),
     generated: join(uda, '.generated'),
+    logs: join(uda, 'logs'),
   };
 }
