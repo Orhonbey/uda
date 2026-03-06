@@ -56,10 +56,16 @@ uda export --format claude
 Install engine-specific knowledge:
 
 ```bash
-uda plugin add https://github.com/user/uda-plugin-unity.git
+uda plugin add https://github.com/Orhonbey/uda-unity-plugin
 uda plugin update unity
 uda plugin update-all
 ```
+
+### Available Plugins
+
+| Plugin | Description |
+|--------|-------------|
+| [uda-unity-plugin](https://github.com/Orhonbey/uda-unity-plugin) | Unity best practices, patterns, workflows, and debugging tools |
 
 ## Project Structure
 
