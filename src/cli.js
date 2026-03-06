@@ -9,6 +9,7 @@ import { handleStatus } from './commands/status.js';
 import { handleConfig } from './commands/config.js';
 import { handlePluginUpdate } from './commands/plugin.js';
 import { handleExport } from './commands/export.js';
+import { handleLogs } from './commands/logs.js';
 
 export function createCli() {
   const program = new Command();
@@ -92,6 +93,14 @@ export function createCli() {
     .argument('[key]', 'Config key to get/set')
     .argument('[value]', 'Value to set')
     .action(handleConfig);
+
+  program
+    .command('logs')
+    .description('Read engine console logs')
+    .option('-e, --errors', 'Show only errors')
+    .option('-w, --warnings', 'Show only warnings')
+    .option('-l, --last <count>', 'Show last N entries')
+    .action(handleLogs);
 
   return program;
 }
