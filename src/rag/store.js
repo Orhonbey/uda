@@ -13,9 +13,12 @@ export class VectorStore {
 
     try {
       this.table = await this.db.openTable(this.tableName);
-    } catch {
+    } catch (err) {
       // Table doesn't exist yet — will be created on first add
       this.table = null;
+      if (err.message && !err.message.includes('does not exist') && !err.message.includes('not found') && !err.message.includes('was not found')) {
+        console.error(`Warning: Unexpected error opening table "${this.tableName}": ${err.message}`);
+      }
     }
   }
 
@@ -52,7 +55,7 @@ export class VectorStore {
       source: row.source,
       engine: row.engine,
       type: row.type,
-      tags: JSON.parse(row.tags || '[]'),
+      tags: parseTags(row.tags),
       score: row._distance,
     }));
   }
@@ -60,5 +63,15 @@ export class VectorStore {
   async count() {
     if (!this.table) return 0;
     return await this.table.countRows();
+  }
+}
+
+function parseTags(value) {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
   }
 }

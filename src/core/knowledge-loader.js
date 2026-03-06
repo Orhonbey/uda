@@ -11,14 +11,22 @@ export async function loadKnowledge(paths) {
     const engineMatch = profile.match(/Engine:\s*(.+)/i);
     if (nameMatch) knowledge.project.name = nameMatch[1].trim();
     if (engineMatch) knowledge.project.engine = engineMatch[1].trim();
-  } catch { /* no profile yet */ }
+  } catch (err) {
+    if (err.code !== 'ENOENT') {
+      console.error(`Warning: Failed to read project profile: ${err.message}`);
+    }
+  }
 
   try {
     const decisions = await readFile(join(paths.knowledge.project, 'decisions.md'), 'utf8');
     knowledge.decisions = decisions.split('\n')
       .filter(l => l.startsWith('- '))
       .map(l => l.slice(2));
-  } catch { /* no decisions yet */ }
+  } catch (err) {
+    if (err.code !== 'ENOENT') {
+      console.error(`Warning: Failed to read decisions file: ${err.message}`);
+    }
+  }
 
   return knowledge;
 }

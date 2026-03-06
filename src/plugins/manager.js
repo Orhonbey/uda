@@ -22,7 +22,23 @@ export class PluginManager {
       const commitHash = log.latest?.hash || 'unknown';
 
       // Read manifest
-      const manifest = JSON.parse(await readFile(join(tmpDir, 'manifest.json'), 'utf8'));
+      let manifestRaw;
+      try {
+        manifestRaw = await readFile(join(tmpDir, 'manifest.json'), 'utf8');
+      } catch (err) {
+        throw new Error(`Plugin repository is missing manifest.json`);
+      }
+
+      let manifest;
+      try {
+        manifest = JSON.parse(manifestRaw);
+      } catch (err) {
+        throw new Error(`Plugin manifest.json contains invalid JSON: ${err.message}`);
+      }
+
+      if (!manifest.name || typeof manifest.name !== 'string') {
+        throw new Error('Plugin manifest.json must include a "name" field');
+      }
       const pluginName = manifest.name;
 
       // Copy knowledge files
@@ -63,12 +79,19 @@ export class PluginManager {
       const plugins = [];
       for (const f of files) {
         if (f.endsWith('.json')) {
-          const data = JSON.parse(await readFile(join(this.paths.plugins, f), 'utf8'));
-          plugins.push(data);
+          try {
+            const data = JSON.parse(await readFile(join(this.paths.plugins, f), 'utf8'));
+            plugins.push(data);
+          } catch (err) {
+            console.error(`Warning: Failed to read plugin metadata "${f}": ${err.message}`);
+          }
         }
       }
       return plugins;
-    } catch {
+    } catch (err) {
+      if (err.code !== 'ENOENT') {
+        console.error(`Warning: Failed to list plugins: ${err.message}`);
+      }
       return [];
     }
   }
@@ -117,7 +140,9 @@ export class PluginManager {
 async function cpDir(src, dest) {
   try {
     await cp(src, dest, { recursive: true });
-  } catch {
-    // Source directory might not exist
+  } catch (err) {
+    if (err.code !== 'ENOENT') {
+      console.error(`Warning: Failed to copy "${src}" to "${dest}": ${err.message}`);
+    }
   }
 }

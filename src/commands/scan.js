@@ -7,19 +7,44 @@ import { udaPaths } from '../core/constants.js';
 export async function handleScan() {
   const root = process.cwd();
   const paths = udaPaths(root);
-  const rag = new RagManager(paths.rag.lancedb);
-  await rag.init();
+
+  let rag;
+  try {
+    rag = new RagManager(paths.rag.lancedb);
+    await rag.init();
+  } catch (err) {
+    console.error(`✘ Failed to initialize RAG engine: ${err.message}`);
+    process.exitCode = 1;
+    return;
+  }
 
   // Scan .uda/knowledge directory
   const knowledgeDir = paths.knowledge.root;
-  const files = await collectMdFiles(knowledgeDir);
+  let files;
+  try {
+    files = await collectMdFiles(knowledgeDir);
+  } catch (err) {
+    console.error(`✘ Failed to collect files from knowledge directory: ${err.message}`);
+    process.exitCode = 1;
+    return;
+  }
+
+  if (files.length === 0) {
+    console.log('No markdown files found in knowledge directory.');
+    console.log('  Add .md files to .uda/knowledge/ or install a plugin.');
+    return;
+  }
 
   let totalChunks = 0;
   for (const file of files) {
     const relPath = relative(root, file);
-    const count = await rag.learnFile(file, { source: relPath });
-    totalChunks += count;
-    console.log(`  ✔ ${relPath} (${count} chunks)`);
+    try {
+      const count = await rag.learnFile(file, { source: relPath });
+      totalChunks += count;
+      console.log(`  ✔ ${relPath} (${count} chunks)`);
+    } catch (err) {
+      console.error(`  ✘ Failed to index ${relPath}: ${err.message}`);
+    }
   }
 
   console.log(`\n✔ Scan complete: ${files.length} files, ${totalChunks} chunks indexed`);
@@ -37,8 +62,10 @@ async function collectMdFiles(dir) {
         results.push(fullPath);
       }
     }
-  } catch {
-    // Directory doesn't exist
+  } catch (err) {
+    if (err.code !== 'ENOENT') {
+      console.error(`✘ Failed to read directory ${dir}: ${err.message}`);
+    }
   }
   return results;
 }
