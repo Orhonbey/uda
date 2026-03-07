@@ -1,3 +1,6 @@
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { Command } from 'commander';
 import { handleLearn } from './commands/learn.js';
 import { handleSearch } from './commands/search.js';
@@ -12,8 +15,15 @@ import { handleExport } from './commands/export.js';
 import { handleLogs } from './commands/logs.js';
 import { handleClean } from './commands/clean.js';
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const pkg = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf8'));
+
 export function createCli() {
   const program = new Command();
+
+  program
+    .name('uda')
+    .version(pkg.version);
 
   program
     .command('init')
