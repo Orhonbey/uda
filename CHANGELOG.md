@@ -6,6 +6,18 @@ Format [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) baz alınmışt�
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-03-07
+
+### Added
+- `uda init` now auto-completes setup: creates project profile, saves engine to config, updates state after scan
+- Project profile (`profile.md`) generated with Project/Engine fields during init
+- Engine detection result persisted to `config.json`
+- `state/current.md` updated after scan with indexed file/chunk counts
+
+### Fixed
+- Init no longer shows "Run uda scan" after automatic scan completes
+- Adapters now correctly display project name and engine instead of "Unknown / N/A"
+
 ## [0.4.1] - 2026-03-07
 
 ### Fixed

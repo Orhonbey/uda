@@ -1,7 +1,9 @@
-import { createInterface } from 'readline';
-import { readFileSync } from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { createInterface } from 'readline'
+import { readFileSync } from 'fs'
+import { writeFile } from 'fs/promises'
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
+import { loadConfig, saveConfig } from '../core/config.js'
 import { initProject } from '../core/init.js';
 import { handleScan } from './scan.js';
 import { handleSync } from './sync.js';
@@ -39,9 +41,34 @@ export async function handleInit(options) {
   console.log('✔ .uda/ directory created\n');
 
   // Step 2: Engine detection + plugin install prompt
-  const engine = options.engine || await detectEngine(root);
+  const engine = options.engine || await detectEngine(root)
   if (engine) {
-    console.log(`✔ Engine detected: ${engine}`);
+    console.log(`✔ Engine detected: ${engine}`)
+  }
+
+  // Step 2b: Create project profile
+  const projectName = root.split('/').pop() || 'Unknown'
+  const profilePath = join(root, '.uda', 'knowledge', 'project', 'profile.md')
+  const profileContent = `# Project Profile
+
+Project: ${projectName}
+Engine: ${engine || 'unknown'}
+Initialized: ${new Date().toISOString().split('T')[0]}
+`
+  await writeFile(profilePath, profileContent)
+  console.log('✔ Project profile created')
+
+  // Step 2c: Save engine to config
+  if (engine) {
+    try {
+      const config = await loadConfig(root)
+      config.engine = engine
+      await saveConfig(root, config)
+    } catch { /* config may not exist yet in edge cases */ }
+  }
+
+  // Step 2d: Plugin install prompt
+  if (engine) {
     const defaultUrl = DEFAULT_PLUGINS[engine];
     if (defaultUrl && !options.skipPlugin) {
       await promptPluginInstall(engine, defaultUrl);

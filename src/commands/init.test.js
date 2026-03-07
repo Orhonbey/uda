@@ -1,7 +1,7 @@
 // src/commands/init.test.js — Integration tests for handleInit
 import { describe, it, before, after, beforeEach } from 'node:test';
 import assert from 'node:assert';
-import { mkdtemp, rm, readFile, access, writeFile } from 'fs/promises';
+import { mkdtemp, rm, readFile, access, writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { udaPaths } from '../core/constants.js';
@@ -77,4 +77,47 @@ describe('handleInit integration', () => {
     process.chdir(savedCwd);
     await rm(dir2, { recursive: true, force: true });
   });
-});
+})
+
+describe('handleInit profile and config', () => {
+  let testDir, originalCwd
+
+  before(async () => {
+    testDir = await mkdtemp(join(tmpdir(), 'uda-init-profile-'))
+    originalCwd = process.cwd()
+    process.chdir(testDir)
+  })
+
+  after(async () => {
+    process.chdir(originalCwd)
+    process.exitCode = 0
+    await rm(testDir, { recursive: true, force: true })
+  })
+
+  beforeEach(() => { process.exitCode = 0 })
+
+  it('creates profile.md with Project and Engine fields', async () => {
+    const { handleInit } = await import('./init.js')
+    await handleInit({ skipPlugin: true })
+    
+    const profilePath = join(testDir, '.uda', 'knowledge', 'project', 'profile.md')
+    const content = await readFile(profilePath, 'utf8')
+    
+    assert.ok(content.includes('Project:'), 'Profile should contain Project field')
+    assert.ok(content.includes('Engine:'), 'Profile should contain Engine field')
+  })
+
+  it('saves engine to config.json', async () => {
+    // Create a Unity project marker
+    await mkdir(join(testDir, 'ProjectSettings'), { recursive: true })
+    await writeFile(join(testDir, 'ProjectSettings', 'ProjectVersion.txt'), '2022.3')
+    
+    const { handleInit } = await import('./init.js')
+    await handleInit({ skipPlugin: true })
+    
+    const configPath = join(testDir, '.uda', 'config.json')
+    const config = JSON.parse(await readFile(configPath, 'utf8'))
+    
+    assert.strictEqual(config.engine, 'unity', 'Config should have engine field set to unity')
+  })
+})

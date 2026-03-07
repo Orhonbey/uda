@@ -19,14 +19,14 @@ const INITIAL_STATE = `# Project State
 ## Last Updated: ${new Date().toISOString().split('T')[0]}
 
 ## Active Work
-None yet. Run \`uda scan\` to index your project.
+Initializing...
 
 ## Completed
 - [x] UDA initialized
 
 ## Decisions
 (Architectural decisions will be recorded here)
-`;
+`
 
 export async function initProject(root) {
   const paths = udaPaths(root);

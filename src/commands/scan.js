@@ -1,5 +1,5 @@
 // src/commands/scan.js
-import { readdir, stat, readFile } from 'fs/promises';
+import { readdir, stat, readFile, writeFile } from 'fs/promises'
 import { join, relative, extname } from 'path';
 import { RagManager } from '../rag/manager.js';
 import { udaPaths } from '../core/constants.js';
@@ -47,7 +47,27 @@ export async function handleScan() {
     }
   }
 
-  console.log(`\n✔ Scan complete: ${files.length} files, ${totalChunks} chunks indexed`);
+  console.log(`\n✔ Scan complete: ${files.length} files, ${totalChunks} chunks indexed`)
+
+  // Update state/current.md
+  try {
+    const statePath = paths.state.current
+    const stateContent = `# Project State
+
+## Last Updated: ${new Date().toISOString().split('T')[0]}
+
+## Active Work
+Project indexed. ${files.length} knowledge files, ${totalChunks} chunks in RAG.
+
+## Completed
+- [x] UDA initialized
+- [x] Knowledge base scanned
+
+## Decisions
+(Architectural decisions will be recorded here)
+`
+    await writeFile(statePath, stateContent)
+  } catch { /* non-critical, don't fail scan for state update */ }
 }
 
 async function collectMdFiles(dir) {

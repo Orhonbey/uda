@@ -1,7 +1,7 @@
 // src/commands/scan.test.js — Integration tests for handleScan
 import { describe, it, before, after, beforeEach } from 'node:test';
 import assert from 'node:assert';
-import { mkdtemp, rm, mkdir, writeFile } from 'fs/promises';
+import { mkdtemp, rm, mkdir, writeFile, readFile } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { initProject } from '../core/init.js';
@@ -57,4 +57,21 @@ describe('handleScan integration', { timeout: 60_000 }, () => {
     await handleScan();
     assert.notStrictEqual(process.exitCode, 1);
   });
+
+  it('updates state/current.md after scan', async () => {
+    // Add a markdown file to knowledge
+    await writeFile(
+      join(paths.knowledge.project, 'state-test.md'),
+      '# State Test\n\nContent for state update test.'
+    )
+
+    const { handleScan } = await import('./scan.js')
+    await handleScan()
+    
+    const statePath = join(testDir, '.uda', 'state', 'current.md')
+    const content = await readFile(statePath, 'utf8')
+    
+    assert.ok(content.includes('Knowledge base scanned'), 'State should show scanned status')
+    assert.ok(content.includes('[x] Knowledge base scanned'), 'State should have completed checkbox')
+  })
 });

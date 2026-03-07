@@ -53,6 +53,7 @@ describe('initProject', () => {
     await initProject(testDir);
     const content = await readFile(join(testDir, '.uda/state/current.md'), 'utf8');
     assert.ok(content.includes('# Project State'));
+    assert.ok(content.includes('Initializing...'));
   });
 
   it('does not overwrite existing config', async () => {
