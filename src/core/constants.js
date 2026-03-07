@@ -1,6 +1,12 @@
 // src/core/constants.js
 import { join } from 'path';
 
+export const DEFAULT_PLUGINS = {
+  unity: 'https://github.com/Orhonbey/uda-unity-plugin.git',
+  // godot: 'https://github.com/SunalSpaciel/uda-godot-plugin.git',
+  // unreal: 'https://github.com/SunalSpaciel/uda-unreal-plugin.git',
+};
+
 export const UDA_DIR = '.uda';
 
 export function udaPaths(root) {

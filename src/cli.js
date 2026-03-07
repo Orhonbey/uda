@@ -18,6 +18,7 @@ export function createCli() {
     .command('init')
     .description('Initialize UDA in current project')
     .option('-e, --engine <name>', 'Engine plugin to install (e.g. unity)')
+    .option('--skip-plugin', 'Skip plugin installation prompt')
     .action(handleInit);
 
   program

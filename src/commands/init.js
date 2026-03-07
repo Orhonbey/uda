@@ -1,7 +1,10 @@
+import { createInterface } from 'readline';
 import { initProject } from '../core/init.js';
 import { handleScan } from './scan.js';
 import { handleSync } from './sync.js';
+import { handlePluginAdd } from './plugin.js';
 import { validateEngine } from '../core/validators.js';
+import { DEFAULT_PLUGINS } from '../core/constants.js';
 
 export async function handleInit(options) {
   const root = process.cwd();
@@ -29,11 +32,17 @@ export async function handleInit(options) {
   }
   console.log('✔ .uda/ directory created\n');
 
-  // Step 2: Engine detection
+  // Step 2: Engine detection + plugin install prompt
   const engine = options.engine || await detectEngine(root);
   if (engine) {
     console.log(`✔ Engine detected: ${engine}`);
-    console.log(`  Run \`uda plugin add <repo>\` to install ${engine} plugin\n`);
+    const defaultUrl = DEFAULT_PLUGINS[engine];
+    if (defaultUrl && !options.skipPlugin) {
+      await promptPluginInstall(engine, defaultUrl);
+    } else if (!defaultUrl) {
+      console.log(`  No default plugin available for ${engine}.`);
+      console.log(`  Run \`uda plugin add <repo>\` to install a ${engine} plugin\n`);
+    }
   }
 
   // Step 3: Initial scan
@@ -48,6 +57,48 @@ export async function handleInit(options) {
   console.log('  uda search "your query"');
   console.log('  uda learn <file.md>');
   console.log('  uda plugin add <git-repo>');
+}
+
+async function promptPluginInstall(engine, defaultUrl) {
+  const answer = await ask(
+    `\n  Install official ${engine} plugin?\n` +
+    `    [Y] Yes, install default (${defaultUrl})\n` +
+    `    [C] Custom — enter your own plugin URL\n` +
+    `    [N] No, skip\n` +
+    `  Choice (Y/c/n): `
+  );
+
+  const choice = answer.trim().toLowerCase();
+
+  if (choice === 'n') {
+    console.log('  Skipped plugin installation.\n');
+    return;
+  }
+
+  let repoUrl = defaultUrl;
+
+  if (choice === 'c') {
+    repoUrl = await ask('  Plugin git URL: ');
+    repoUrl = repoUrl.trim();
+    if (!repoUrl) {
+      console.log('  No URL provided. Skipped plugin installation.\n');
+      return;
+    }
+  }
+
+  console.log(`\n  Installing ${engine} plugin...`);
+  await handlePluginAdd(repoUrl);
+  console.log('');
+}
+
+function ask(question) {
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
+  return new Promise((resolve) => {
+    rl.question(question, (answer) => {
+      rl.close();
+      resolve(answer);
+    });
+  });
 }
 
 async function detectEngine(root) {

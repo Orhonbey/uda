@@ -72,7 +72,7 @@ describe('handleInit integration', () => {
     const savedCwd = process.cwd();
     process.chdir(dir2);
     const { handleInit } = await import('./init.js');
-    await handleInit({ engine: 'unity' });
+    await handleInit({ engine: 'unity', skipPlugin: true });
     assert.notStrictEqual(process.exitCode, 1);
     process.chdir(savedCwd);
     await rm(dir2, { recursive: true, force: true });
