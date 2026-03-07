@@ -6,6 +6,11 @@ Format [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) baz alınmışt�
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-03-07
+
+### Fixed
+- CLI: `--version` flag support added (was returning "unknown option")
+
 ## [0.4.0] - 2026-03-07
 
 ### Added
