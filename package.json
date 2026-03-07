@@ -32,6 +32,10 @@
     "vector-database",
     "embeddings"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Orhonbey/uda"
+  },
   "author": "UDA Contributors",
   "license": "MIT",
   "engines": {
