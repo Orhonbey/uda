@@ -18,6 +18,21 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
       - run: npm ci
       - run: node --test --test-concurrency=1 src/**/*.test.js
+
+      # Tag ile package.json versiyonunun eşleştiğini doğrula
+      - name: Verify version consistency
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "Tag $TAG_VERSION != package.json $PKG_VERSION"
+            exit 1
+          fi
+
+      # Publish edilecek dosyaları göster
+      - name: Verify package contents
+        run: npm pack --dry-run
+
       - run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

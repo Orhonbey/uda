@@ -1,1 +1,8 @@
 node_modules/
+.DS_Store
+coverage/
+.uda/rag/
+.uda/.generated/
+*.log
+.claude/
+.tmp-plugin/

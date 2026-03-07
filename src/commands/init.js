@@ -1,10 +1,16 @@
 import { createInterface } from 'readline';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { initProject } from '../core/init.js';
 import { handleScan } from './scan.js';
 import { handleSync } from './sync.js';
 import { handlePluginAdd } from './plugin.js';
 import { validateEngine } from '../core/validators.js';
 import { DEFAULT_PLUGINS } from '../core/constants.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const pkg = JSON.parse(readFileSync(join(__dirname, '../../package.json'), 'utf8'));
 
 export async function handleInit(options) {
   const root = process.cwd();
@@ -19,7 +25,7 @@ export async function handleInit(options) {
     }
   }
 
-  console.log('UDA v0.2.0\n');
+  console.log(`UDA v${pkg.version}\n`);
 
   // Step 1: Create directory structure
   console.log('Creating project structure...');
