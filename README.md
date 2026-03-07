@@ -64,13 +64,13 @@ uda init --skip-plugin        # Skip plugin prompt (CI/automation)
 
 ## Supported AI Tools
 
-| Format | Generated Files |
-|--------|----------------|
-| **claude** | `CLAUDE.md`, `.claude/skills/`, `.claude/agents/` |
-| **cursor** | `.cursorrules` |
-| **windsurf** | `.windsurfrules` |
-| **agents-md** | `AGENTS.md` |
-| **raw** | `full-context.md` |
+| Format | Generated Files | Status |
+|--------|----------------|--------|
+| **claude** | `CLAUDE.md`, `.claude/skills/`, `.claude/agents/` | Available |
+| **cursor** | `.cursorrules` | Coming soon |
+| **windsurf** | `.windsurfrules` | Coming soon |
+| **agents-md** | `AGENTS.md` | Coming soon |
+| **raw** | `full-context.md` | Coming soon |
 
 ## Plugin System
 
