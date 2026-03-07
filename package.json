@@ -1,6 +1,6 @@
 {
   "name": "uda-cli",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Universal Dev AI — AI-agnostic context engineering + RAG for game development",
   "type": "module",
   "main": "./src/cli.js",
