@@ -10,6 +10,7 @@ import { handleConfig } from './commands/config.js';
 import { handlePluginUpdate } from './commands/plugin.js';
 import { handleExport } from './commands/export.js';
 import { handleLogs } from './commands/logs.js';
+import { handleClean } from './commands/clean.js';
 
 export function createCli() {
   const program = new Command();
@@ -102,6 +103,12 @@ export function createCli() {
     .option('-w, --warnings', 'Show only warnings')
     .option('-l, --last <count>', 'Show last N entries')
     .action(handleLogs);
+
+  program
+    .command('clean')
+    .description('Remove UDA from current project')
+    .option('-f, --force', 'Skip confirmation prompt')
+    .action(handleClean);
 
   return program;
 }
