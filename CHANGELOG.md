@@ -6,12 +6,15 @@ Format [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) baz alınmışt�
 
 ## [Unreleased]
 
-## [0.3.0] - 2026-03-07
+## [0.4.0] - 2026-03-07
 
 ### Added
 - `uda clean [--force]` command to remove UDA from a project
 - Removes .uda/ directory and all adapter-generated files (CLAUDE.md, .cursorrules, AGENTS.md, .claude/commands/uda/, .claude/agents/uda-*.md)
 - Interactive confirmation prompt with --force bypass
+
+### Fixed
+- Test runner: sequential execution (`--test-concurrency=1`) to prevent deserialization errors
 
 ## [0.2.1] - 2026-03-07
 
