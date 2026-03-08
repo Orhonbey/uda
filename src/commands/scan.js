@@ -61,22 +61,14 @@ export async function handleScan() {
   // Update state/current.md
   try {
     const statePath = paths.state.current
-    const stateContent = `# Project State
+    const stateContent = `# UDA State
 
-## Last Updated: ${new Date().toISOString().split('T')[0]}
-
-## Active Work
-Project indexed. ${files.length} knowledge files, ${totalChunks} chunks in RAG.
-
-## Completed
-- [x] UDA initialized
-- [x] Knowledge base scanned
-
-## Decisions
-(Architectural decisions will be recorded here)
+Last Scan: ${new Date().toISOString().split('T')[0]}
+Knowledge Files: ${files.length}
+RAG Chunks: ${totalChunks}
 `
     await writeFile(statePath, stateContent)
-  } catch { /* non-critical, don't fail scan for state update */ }
+  } catch { /* non-critical */ }
 }
 
 async function collectMdFiles(dir) {

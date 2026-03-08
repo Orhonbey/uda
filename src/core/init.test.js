@@ -52,8 +52,8 @@ describe('initProject', () => {
   it('creates initial state/current.md', async () => {
     await initProject(testDir);
     const content = await readFile(join(testDir, '.uda/state/current.md'), 'utf8');
-    assert.ok(content.includes('# Project State'));
-    assert.ok(content.includes('Initializing...'));
+    assert.ok(content.includes('# UDA State'));
+    assert.ok(content.includes('Last Scan:'));
   });
 
   it('does not overwrite existing config', async () => {

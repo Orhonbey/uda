@@ -49,7 +49,7 @@ describe('handleInit integration', () => {
 
   it('creates initial state file', async () => {
     const content = await readFile(paths.state.current, 'utf8');
-    assert.ok(content.includes('# Project State'));
+    assert.ok(content.includes('# UDA State'));
   });
 
   it('preserves existing config on re-init', async () => {

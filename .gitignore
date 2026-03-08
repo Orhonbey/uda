@@ -7,3 +7,6 @@ coverage/
 .claude/
 .tmp-plugin/
 docs/plans/
+.kimi_status
+kimi_run.sh
+kimi-claude-plan.md

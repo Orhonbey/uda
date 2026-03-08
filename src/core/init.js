@@ -14,18 +14,11 @@ const DEFAULT_CONFIG = {
   },
 };
 
-const INITIAL_STATE = `# Project State
+const INITIAL_STATE = `# UDA State
 
-## Last Updated: ${new Date().toISOString().split('T')[0]}
-
-## Active Work
-Initializing...
-
-## Completed
-- [x] UDA initialized
-
-## Decisions
-(Architectural decisions will be recorded here)
+Last Scan: none
+Knowledge Files: 0
+RAG Chunks: 0
 `
 
 export async function initProject(root) {
