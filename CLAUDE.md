@@ -15,7 +15,7 @@ npm test  # 184 test
 uda init [--engine unity|godot|unreal] [--skip-plugin]
 uda search "query"
 uda learn <file.md>
-uda logs [--errors|--warnings] [--last N]
+uda logs [--errors|--trace] [--channel <name>] [--last N]
 ```
 
 ## Kural Linkleri
@@ -25,6 +25,7 @@ uda logs [--errors|--warnings] [--last N]
 | [docs/VERSIONING.md](docs/VERSIONING.md) | Versiyon bump yapmadan önce |
 | [docs/RELEASING.md](docs/RELEASING.md) | Release oluşturmadan önce |
 | [docs/BRANCHING.md](docs/BRANCHING.md) | Commit yapmadan önce |
+| [docs/decisions/INDEX.md](docs/decisions/INDEX.md) | Teknik/mimari karar almadan önce |
 
 ## Kritik Kurallar (Her Zaman Uy)
 
@@ -44,6 +45,17 @@ src/
 ├── utils/              # Yardımcılar (git, embeddings, lancedb)
 └── adapters/           # AI aracı adaptörleri (claude, cursor, windsurf)
 ```
+
+## Karar Kaydi Kurali
+
+Brainstorming veya design sirasinda teknik/mimari karar alindiginda:
+
+1. `docs/decisions/INDEX.md` oku — sonraki numararayi bul
+2. `docs/decisions/NNN-kisa-baslik.md` olustur (format: Baglam, Karar, Neden, Alternatifler)
+3. INDEX.md'ye satirini ekle
+4. Design doc'tan karar dosyasina link ver
+
+Bu adim design doc commit'inden once yapilir. Karar olmadan design tamamlanmaz.
 
 ## Conventions
 
