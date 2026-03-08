@@ -6,6 +6,19 @@ Format [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) baz alınmışt�
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-03-08
+
+### Added
+- Tagged trace logging: `[uda:channel]` prefixed logs captured to `trace.jsonl`
+- `uda logs --trace` flag to read trace logs
+- `uda logs --channel <name>` flag to filter by trace channel
+- Decision records: 001-005 architectural decisions documented
+
+### Changed
+- Warning logs no longer captured by log bridge (reduces token waste)
+- `--warnings` flag removed from `uda logs` command
+- Log bridge writes only Error/Exception to console.jsonl
+
 ## [0.5.0] - 2026-03-07
 
 ### Added
