@@ -3,6 +3,7 @@ import { readdir, stat, readFile, writeFile } from 'fs/promises'
 import { join, relative, extname } from 'path';
 import { RagManager } from '../rag/manager.js';
 import { udaPaths } from '../core/constants.js';
+import { syncPluginsToConfig } from '../core/plugin-sync.js';
 
 export async function handleScan() {
   const root = process.cwd();
@@ -17,6 +18,14 @@ export async function handleScan() {
     process.exitCode = 1;
     return;
   }
+
+  // Sync plugins to config (self-healing)
+  try {
+    const syncResult = await syncPluginsToConfig(root)
+    if (syncResult.added.length > 0) {
+      console.log('  Config synced: added ' + syncResult.added.join(', '))
+    }
+  } catch { /* non-critical */ }
 
   // Scan .uda/knowledge directory
   const knowledgeDir = paths.knowledge.root;
