@@ -120,4 +120,31 @@ describe('handleInit profile and config', () => {
     
     assert.strictEqual(config.engine, 'unity', 'Config should have engine field set to unity')
   })
+
+  it('creates enriched profile with engine version for Unity', async () => {
+    const projectDir = await mkdtemp(join(tmpdir(), 'uda-init-profile-'))
+    const psDir = join(projectDir, 'ProjectSettings')
+    await mkdir(psDir, { recursive: true })
+    await writeFile(
+      join(psDir, 'ProjectVersion.txt'),
+      'm_EditorVersion: 2022.3.17f1\nm_EditorVersionWithRevision: 2022.3.17f1 (abc123)'
+    )
+    const assetsDir = join(projectDir, 'Assets')
+    await mkdir(join(assetsDir, 'Scripts'), { recursive: true })
+    await mkdir(join(assetsDir, 'Scenes'), { recursive: true })
+    await mkdir(join(assetsDir, 'Prefabs'), { recursive: true })
+
+    process.chdir(projectDir)
+    process.exitCode = 0
+    const { handleInit } = await import('./init.js')
+    await handleInit({ engine: 'unity', skipPlugin: true })
+
+    const profilePath = join(projectDir, '.uda', 'knowledge', 'project', 'profile.md')
+    const content = await readFile(profilePath, 'utf8')
+
+    assert.ok(content.includes('2022.3.17f1'), 'should contain Unity version')
+    assert.ok(content.includes('Scripts'), 'should list Assets subdirectories')
+
+    await rm(projectDir, { recursive: true, force: true })
+  })
 })

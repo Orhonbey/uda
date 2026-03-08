@@ -46,15 +46,10 @@ export async function handleInit(options) {
     console.log(`✔ Engine detected: ${engine}`)
   }
 
-  // Step 2b: Create project profile
+  // Step 2b: Create enriched project profile
   const projectName = root.split('/').pop() || 'Unknown'
   const profilePath = join(root, '.uda', 'knowledge', 'project', 'profile.md')
-  const profileContent = `# Project Profile
-
-Project: ${projectName}
-Engine: ${engine || 'unknown'}
-Initialized: ${new Date().toISOString().split('T')[0]}
-`
+  const profileContent = await buildProfile(root, projectName, engine)
   await writeFile(profilePath, profileContent)
   console.log('✔ Project profile created')
 
@@ -143,4 +138,53 @@ async function detectEngine(root) {
   if (existsSync(join(root, 'Config', 'DefaultEngine.ini'))) return 'unreal';
 
   return null;
+}
+
+async function buildProfile(root, projectName, engine) {
+  const { readFile: readFileAsync } = await import('fs/promises')
+  const lines = [
+    '# Project Profile',
+    '',
+    'Project: ' + projectName,
+    'Engine: ' + (engine || 'unknown'),
+    'Initialized: ' + new Date().toISOString().split('T')[0],
+  ]
+
+  // Engine version
+  if (engine === 'unity') {
+    try {
+      const versionFile = await readFileAsync(
+        join(root, 'ProjectSettings', 'ProjectVersion.txt'), 'utf8'
+      )
+      const match = versionFile.match(/m_EditorVersion:\s*(.+)/)
+      if (match) lines.push('Engine Version: ' + match[1].trim())
+    } catch { /* no ProjectVersion.txt */ }
+  } else if (engine === 'godot') {
+    try {
+      const godotFile = await readFileAsync(join(root, 'project.godot'), 'utf8')
+      const match = godotFile.match(/config\/features=PackedStringArray\("(\d+\.\d+)"/)
+      if (match) lines.push('Engine Version: ' + match[1])
+    } catch { /* no project.godot */ }
+  }
+
+  // Directory structure (Assets/ for Unity, src/ for Godot, Source/ for Unreal)
+  const assetsDirName = engine === 'unity' ? 'Assets'
+    : engine === 'godot' ? 'src' : 'Source'
+  try {
+    const { readdirSync, statSync } = await import('fs')
+    const assetsPath = join(root, assetsDirName)
+    const entries = readdirSync(assetsPath)
+    const dirs = entries.filter(e => {
+      try { return statSync(join(assetsPath, e)).isDirectory() }
+      catch { return false }
+    })
+    if (dirs.length > 0) {
+      lines.push('')
+      lines.push('## Directory Structure (' + assetsDirName + '/)')
+      for (const d of dirs) lines.push('- ' + d)
+    }
+  } catch { /* no assets dir */ }
+
+  lines.push('')
+  return lines.join('\n')
 }
