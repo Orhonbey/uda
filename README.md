@@ -17,10 +17,22 @@ AI-agnostic context engineering + RAG CLI tool for game development. Local, file
 npm install -g uda-cli
 ```
 
-Or run directly:
+Or run directly without installing:
 
 ```bash
 npx uda-cli init
+```
+
+### Update
+
+```bash
+npm update -g uda-cli
+```
+
+Check your current version:
+
+```bash
+uda --version
 ```
 
 ## Quick Start
@@ -54,7 +66,9 @@ uda init --skip-plugin        # Skip plugin prompt (CI/automation)
 | `uda scan` | Scan project and index into RAG |
 | `uda search <query>` | Search knowledge base |
 | `uda learn <source>` | Teach knowledge to RAG |
-| `uda logs` | View Unity console logs |
+| `uda logs` | View engine error/exception logs |
+| `uda logs --trace` | View tagged trace logs |
+| `uda logs --channel <name>` | Filter trace logs by channel |
 | `uda plugin add <repo>` | Install an engine plugin |
 | `uda plugin update <name>` | Update an installed plugin |
 | `uda plugin update-all` | Update all plugins |
@@ -102,7 +116,7 @@ uda plugin update-all
 │   └── community/       # Community contributions
 ├── workflows/           # AI-assisted workflows (YAML)
 ├── agents/              # Specialized AI agents
-├── logs/                # Engine logs (console.jsonl)
+├── logs/                # Engine logs (console.jsonl, trace.jsonl)
 ├── state/
 │   ├── current.md       # Active work state
 │   ├── features/        # Feature specifications
