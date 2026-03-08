@@ -26,7 +26,11 @@ npx uda-cli init
 ### Update
 
 ```bash
+# Global
 npm update -g uda-cli
+
+# Local (proje içi)
+npm update uda-cli
 ```
 
 Check your current version:
