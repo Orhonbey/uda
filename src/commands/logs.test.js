@@ -37,9 +37,9 @@ describe('handleLogs', () => {
     const logsDir = join(testDir, '.uda', 'logs');
     await mkdir(logsDir, { recursive: true });
     const entries = [
-      JSON.stringify({ timestamp: '2026-03-06T10:00:00Z', level: 'Error', message: 'NullRef', stackTrace: 'at PlayerController.cs:42' }),
-      JSON.stringify({ timestamp: '2026-03-06T10:00:01Z', level: 'Warning', message: 'Shader not found', stackTrace: '' }),
-      JSON.stringify({ timestamp: '2026-03-06T10:00:02Z', level: 'Log', message: 'Game started', stackTrace: '' }),
+      JSON.stringify({ time: '2026-03-06T10:00:00Z', type: 'Error', message: 'NullRef', stack: 'at PlayerController.cs:42' }),
+      JSON.stringify({ time: '2026-03-06T10:00:01Z', type: 'Warning', message: 'Shader not found', stack: '' }),
+      JSON.stringify({ time: '2026-03-06T10:00:02Z', type: 'Log', message: 'Game started', stack: '' }),
     ];
     await writeFile(join(logsDir, 'console.jsonl'), entries.join('\n'));
 
@@ -64,17 +64,6 @@ describe('handleLogs', () => {
     assert.ok(!output.some(l => l.includes('Game started')));
   });
 
-  it('filters warnings with --warnings flag', async () => {
-    const { handleLogs } = await import('./logs.js?t=warnings');
-    const output = [];
-    const origLog = console.log;
-    console.log = (...args) => output.push(args.join(' '));
-    await handleLogs({ warnings: true });
-    console.log = origLog;
-    assert.ok(output.some(l => l.includes('Shader not found')));
-    assert.ok(!output.some(l => l.includes('Game started')));
-  });
-
   it('limits output with --last flag', async () => {
     const { handleLogs } = await import('./logs.js?t=last');
     const output = [];
@@ -85,5 +74,53 @@ describe('handleLogs', () => {
     // Should only show last entry
     const logLines = output.filter(l => l.includes('['));
     assert.ok(logLines.length <= 2); // header + 1 entry max
+  });
+
+  it('reads trace log entries with --trace flag', async () => {
+    const logsDir = join(testDir, '.uda', 'logs');
+    await mkdir(logsDir, { recursive: true });
+    const entries = [
+      JSON.stringify({ time: '2026-03-06T10:00:00Z', type: 'state', message: 'Idle to Attack', stack: '' }),
+      JSON.stringify({ time: '2026-03-06T10:00:01Z', type: 'perf', message: 'frame took 45ms', stack: '' }),
+    ];
+    await writeFile(join(logsDir, 'trace.jsonl'), entries.join('\n'));
+
+    const { handleLogs } = await import('./logs.js?t=trace');
+    const output = [];
+    const origLog = console.log;
+    console.log = (...args) => output.push(args.join(' '));
+    await handleLogs({ trace: true });
+    console.log = origLog;
+    assert.ok(output.some(l => l.includes('Idle to Attack')));
+    assert.ok(output.some(l => l.includes('frame took 45ms')));
+  });
+
+  it('filters trace logs by channel', async () => {
+    const { handleLogs } = await import('./logs.js?t=channel');
+    const output = [];
+    const origLog = console.log;
+    console.log = (...args) => output.push(args.join(' '));
+    await handleLogs({ channel: 'state' });
+    console.log = origLog;
+    assert.ok(output.some(l => l.includes('Idle to Attack')));
+    assert.ok(!output.some(l => l.includes('frame took 45ms')));
+  });
+
+  it('shows message when no trace logs exist', async () => {
+    // Create a fresh temp directory without trace logs
+    const freshDir = await mkdtemp(join(tmpdir(), 'uda-logs-fresh-'));
+    await initProject(freshDir);
+    const prevCwd = process.cwd();
+    process.chdir(freshDir);
+
+    const { handleLogs } = await import('./logs.js?t=no-trace');
+    const output = [];
+    const origLog = console.log;
+    console.log = (...args) => output.push(args.join(' '));
+    await handleLogs({ trace: true });
+    console.log = origLog;
+    process.chdir(prevCwd);
+    await rm(freshDir, { recursive: true, force: true });
+    assert.ok(output.some(l => l.includes('No trace logs found')));
   });
 });

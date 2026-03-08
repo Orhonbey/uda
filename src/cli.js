@@ -110,7 +110,8 @@ export function createCli() {
     .command('logs')
     .description('Read engine console logs')
     .option('-e, --errors', 'Show only errors')
-    .option('-w, --warnings', 'Show only warnings')
+    .option('-t, --trace', 'Show trace logs')
+    .option('-c, --channel <name>', 'Filter by trace channel')
     .option('-l, --last <count>', 'Show last N entries')
     .action(handleLogs);
 

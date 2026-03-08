@@ -54,7 +54,7 @@ describe('UDA v0.2.0 end-to-end', () => {
     // Add log entries
     await mkdir(paths.logs, { recursive: true });
     await writeFile(join(paths.logs, 'console.jsonl'), [
-      JSON.stringify({ timestamp: '2026-03-06T10:00:00Z', level: 'Error', message: 'NullReferenceException', stackTrace: 'at Player.Update()' }),
+      JSON.stringify({ time: '2026-03-06T10:00:00Z', type: 'Error', message: 'NullReferenceException', stack: 'at Player.Update()' }),
     ].join('\n'));
   });
 

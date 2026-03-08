@@ -1,4 +1,4 @@
-import { readFile, readdir } from 'fs/promises';
+import { readFile } from 'fs/promises';
 import { join } from 'path';
 import { udaPaths } from '../core/constants.js';
 
@@ -7,46 +7,43 @@ export async function handleLogs(options) {
   const paths = udaPaths(root);
   const logsDir = paths.logs;
 
-  // Find log files
-  let logFiles;
+  // Determine which file to read
+  const isTrace = options.trace || options.channel;
+  const targetFile = isTrace ? 'trace.jsonl' : 'console.jsonl';
+
+  // Read target file
+  let content;
   try {
-    const files = await readdir(logsDir);
-    logFiles = files.filter(f => f.endsWith('.jsonl'));
+    content = await readFile(join(logsDir, targetFile), 'utf8');
   } catch (err) {
     if (err.code === 'ENOENT') {
-      console.log('No log files found. Is a log bridge plugin installed?');
+      console.log(isTrace
+        ? 'No trace logs found. Use Debug.Log("[uda:channel] message") in Unity.'
+        : 'No log files found. Is a log bridge plugin installed?');
       return;
     }
     throw err;
   }
 
-  if (logFiles.length === 0) {
-    console.log('No log files found. Is a log bridge plugin installed?');
-    return;
-  }
-
-  // Read and parse all log entries
+  // Parse entries
   let entries = [];
-  for (const file of logFiles) {
-    const content = await readFile(join(logsDir, file), 'utf8');
-    const lines = content.split('\n').filter(l => l.trim());
-    for (const line of lines) {
-      try {
-        entries.push(JSON.parse(line));
-      } catch {
-        // skip malformed lines
-      }
+  const lines = content.split('\n').filter(l => l.trim());
+  for (const line of lines) {
+    try {
+      entries.push(JSON.parse(line));
+    } catch {
+      // skip malformed lines
     }
   }
 
-  // Filter by level
+  // Filter
   if (options.errors) {
-    entries = entries.filter(e => e.level === 'Error' || e.level === 'Exception');
-  } else if (options.warnings) {
-    entries = entries.filter(e => e.level === 'Warning');
+    entries = entries.filter(e => e.type === 'Error' || e.type === 'Exception');
+  } else if (options.channel) {
+    entries = entries.filter(e => e.type === options.channel);
   }
 
-  // Limit results
+  // Limit
   if (options.last) {
     const n = parseInt(options.last, 10) || 20;
     entries = entries.slice(-n);
@@ -58,13 +55,18 @@ export async function handleLogs(options) {
   }
 
   // Display
-  console.log(`Showing ${entries.length} log entries:\n`);
+  console.log(`Showing ${entries.length} ${isTrace ? 'trace' : 'log'} entries:\n`);
   for (const entry of entries) {
-    const time = entry.timestamp ? new Date(entry.timestamp).toLocaleTimeString() : '??:??';
-    const level = (entry.level || 'Log').padEnd(9);
-    console.log(`[${time}] ${level} ${entry.message}`);
-    if (entry.stackTrace) {
-      console.log(`           ${entry.stackTrace.split('\n')[0]}`);
+    const time = entry.time
+      ? new Date(entry.time).toLocaleTimeString()
+      : entry.timestamp
+        ? new Date(entry.timestamp).toLocaleTimeString()
+        : '??:??';
+    const label = (entry.type || 'Log').padEnd(9);
+    console.log(`[${time}] ${label} ${entry.message}`);
+    if (entry.stack || entry.stackTrace) {
+      const st = entry.stack || entry.stackTrace;
+      if (st) console.log(`           ${st.split('\n')[0]}`);
     }
   }
 }
