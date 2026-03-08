@@ -73,4 +73,35 @@ describe('handleStatus integration', () => {
     // state/current.md was created by initProject
     assert.notStrictEqual(process.exitCode, 1);
   });
+
+  it('shows knowledge breakdown by category', async () => {
+    // Add files to each knowledge category
+    await mkdir(join(paths.knowledge.engine, 'unity'), { recursive: true });
+    await writeFile(
+      join(paths.knowledge.engine, 'unity', 'test.md'),
+      '# Test'
+    );
+    await writeFile(
+      join(paths.knowledge.project, 'test.md'),
+      '# Test'
+    );
+
+    process.chdir(testDir);
+    process.exitCode = 0;
+
+    // Capture output
+    const logs = [];
+    const origLog = console.log;
+    console.log = (...args) => logs.push(args.join(' '));
+
+    const { handleStatus } = await import('./status.js');
+    await handleStatus();
+
+    console.log = origLog;
+
+    const output = logs.join('\n');
+    assert.ok(output.includes('Engine:'), 'should show engine knowledge count');
+    assert.ok(output.includes('Project:'), 'should show project knowledge count');
+    assert.ok(output.includes('Community:'), 'should show community knowledge status');
+  });
 });
