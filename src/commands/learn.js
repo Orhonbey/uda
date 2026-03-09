@@ -9,7 +9,14 @@ export async function handleLearn(source, options) {
   // Stdin mode
   if (options.stdin) {
     if (!options.name) {
-      console.error('--name is required with --stdin')
+      console.error('✘ --name is required with --stdin')
+      process.exitCode = 1
+      return
+    }
+
+    // Validate name (prevent path traversal and injection)
+    if (!/^[a-zA-Z0-9_\-\.]+$/.test(options.name)) {
+      console.error('✘ --name must contain only letters, numbers, hyphens, underscores, and dots')
       process.exitCode = 1
       return
     }
@@ -44,16 +51,21 @@ export async function handleLearn(source, options) {
     }
 
     // Dedup: remove old chunks with same source name
-    try {
-      await rag.deleteBySource(options.name)
-    } catch { /* first time, nothing to delete */ }
+    await rag.deleteBySource(options.name)
 
     const type = options.type || 'knowledge'
-    const count = await rag.learnText(content, {
-      type,
-      source: options.name,
-      tags: options.tags ? options.tags.split(',') : [],
-    })
+    let count
+    try {
+      count = await rag.learnText(content, {
+        type,
+        source: options.name,
+        tags: options.tags ? options.tags.split(',') : [],
+      })
+    } catch (err) {
+      console.error(`✘ Failed to index "${options.name}": ${err.message} (previous chunks were cleared — re-run to restore)`)
+      process.exitCode = 1
+      return
+    }
 
     // Save to knowledge dir
     if (['project', 'pattern', 'bug'].includes(type)) {
@@ -64,7 +76,7 @@ export async function handleLearn(source, options) {
       await writeFile(join(destDir, options.name + '.md'), content)
     }
 
-    console.log('Learned ' + count + ' chunks from stdin (' + options.name + ')')
+    console.log(`✔ Learned ${count} chunks from stdin (${options.name})`)
     return
   }
 
