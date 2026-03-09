@@ -44,11 +44,13 @@ export function createCli() {
     .action(handleSearch);
 
   program
-    .command('learn <source>')
+    .command('learn [source]')
     .description('Teach knowledge to RAG')
-    .option('--type <type>', 'Knowledge type (bug-fix, feature, pattern, knowledge)', 'knowledge')
+    .option('--type <type>', 'Knowledge type (knowledge, project, pattern, bug)', 'knowledge')
     .option('--tags <tags>', 'Comma-separated tags')
-    .action(handleLearn);
+    .option('--stdin', 'Read content from stdin')
+    .option('--name <name>', 'Name for stdin content (required with --stdin)')
+    .action(handleLearn)
 
   program
     .command('scan')

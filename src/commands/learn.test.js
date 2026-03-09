@@ -122,4 +122,19 @@ describe('handleLearn integration', { timeout: 60_000 }, () => {
     const content = await readFile(destPath, 'utf8')
     assert.ok(content.includes('NullRef'))
   })
+
+  it('learns from text content with --stdin flag', async () => {
+    const { handleLearn } = await import('./learn.js')
+    await handleLearn(null, {
+      stdin: true,
+      name: 'char-system',
+      type: 'project',
+      _stdinContent: 'CharacterSystem uses MonoBehaviour with Singleton pattern.'
+    })
+    assert.notStrictEqual(process.exitCode, 1)
+
+    const destPath = join(paths.knowledge.project, 'char-system.md')
+    const content = await readFile(destPath, 'utf8')
+    assert.ok(content.includes('CharacterSystem'))
+  })
 })

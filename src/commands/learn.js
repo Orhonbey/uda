@@ -1,11 +1,68 @@
 // src/commands/learn.js
 import { resolve, extname, basename, join } from 'path'
-import { stat, readFile, copyFile, mkdir } from 'fs/promises'
+import { stat, readFile, copyFile, mkdir, writeFile } from 'fs/promises'
 import { RagManager } from '../rag/manager.js';
 import { udaPaths } from '../core/constants.js';
 import { validateLearnType } from '../core/validators.js';
 
 export async function handleLearn(source, options) {
+  // Stdin mode
+  if (options.stdin) {
+    if (!options.name) {
+      console.error('--name is required with --stdin')
+      process.exitCode = 1
+      return
+    }
+
+    // Validate type if provided
+    if (options.type) {
+      const tv = validateLearnType(options.type)
+      if (!tv.valid) {
+        console.error(tv.error)
+        process.exitCode = 1
+        return
+      }
+    }
+
+    const content = options._stdinContent || await readStdin()
+    if (!content || content.trim() === '') {
+      console.error('No content received from stdin')
+      process.exitCode = 1
+      return
+    }
+
+    const paths = udaPaths(process.cwd())
+
+    let rag
+    try {
+      rag = new RagManager(paths.rag.lancedb)
+      await rag.init()
+    } catch (err) {
+      console.error('Failed to initialize RAG engine: ' + err.message)
+      process.exitCode = 1
+      return
+    }
+
+    const type = options.type || 'knowledge'
+    const count = await rag.learnText(content, {
+      type,
+      source: options.name,
+      tags: options.tags ? options.tags.split(',') : [],
+    })
+
+    // Save to knowledge dir
+    if (['project', 'pattern', 'bug'].includes(type)) {
+      const destDir = type === 'project'
+        ? paths.knowledge.project
+        : join(paths.knowledge.project, type === 'pattern' ? 'patterns' : 'bugs')
+      await mkdir(destDir, { recursive: true })
+      await writeFile(join(destDir, options.name + '.md'), content)
+    }
+
+    console.log('Learned ' + count + ' chunks from stdin (' + options.name + ')')
+    return
+  }
+
   // Guard against missing source argument
   if (!source || (typeof source === 'string' && source.trim() === '')) {
     console.error('✘ Source file path is required.');
@@ -88,4 +145,12 @@ export async function handleLearn(source, options) {
     console.error(`✘ Failed to learn from "${source}": ${err.message}`);
     process.exitCode = 1;
   }
+}
+
+async function readStdin() {
+  const chunks = []
+  for await (const chunk of process.stdin) {
+    chunks.push(chunk)
+  }
+  return Buffer.concat(chunks).toString('utf8')
 }
