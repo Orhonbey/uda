@@ -137,4 +137,26 @@ describe('handleLearn integration', { timeout: 60_000 }, () => {
     const content = await readFile(destPath, 'utf8')
     assert.ok(content.includes('CharacterSystem'))
   })
+
+  it('overwrites existing file when same name is learned again', async () => {
+    const { handleLearn } = await import('./learn.js')
+    await handleLearn(null, {
+      stdin: true,
+      name: 'overwrite-test',
+      type: 'project',
+      _stdinContent: '# Version 1\n\nOld content.',
+    })
+
+    await handleLearn(null, {
+      stdin: true,
+      name: 'overwrite-test',
+      type: 'project',
+      _stdinContent: '# Version 2\n\nNew content.',
+    })
+
+    const destPath = join(paths.knowledge.project, 'overwrite-test.md')
+    const content = await readFile(destPath, 'utf8')
+    assert.ok(content.includes('Version 2'), 'should have new content')
+    assert.ok(!content.includes('Version 1'), 'should not have old content')
+  })
 })

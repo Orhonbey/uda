@@ -64,6 +64,14 @@ export class VectorStore {
     if (!this.table) return 0;
     return await this.table.countRows();
   }
+
+  async deleteBySource(source) {
+    if (!this.table) return 0
+    const before = await this.table.countRows()
+    await this.table.delete('source = "' + source + '"')
+    const after = await this.table.countRows()
+    return before - after
+  }
 }
 
 function parseTags(value) {

@@ -43,6 +43,11 @@ export async function handleLearn(source, options) {
       return
     }
 
+    // Dedup: remove old chunks with same source name
+    try {
+      await rag.deleteBySource(options.name)
+    } catch { /* first time, nothing to delete */ }
+
     const type = options.type || 'knowledge'
     const count = await rag.learnText(content, {
       type,

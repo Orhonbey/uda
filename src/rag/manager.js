@@ -36,6 +36,10 @@ export class RagManager {
     return await this.store.search(queryVector, limit);
   }
 
+  async deleteBySource(source) {
+    return await this.store.deleteBySource(source)
+  }
+
   async _indexChunks(chunks) {
     const documents = [];
 
