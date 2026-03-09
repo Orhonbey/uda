@@ -74,4 +74,35 @@ describe('handleScan integration', { timeout: 60_000 }, () => {
     assert.ok(content.includes('Knowledge Files:'), 'State should show file count')
     assert.ok(content.includes('RAG Chunks:'), 'State should show chunk count')
   })
+
+  it('generates structure.md during scan', async () => {
+    // Create mock Unity project
+    const psDir = join(testDir, 'ProjectSettings')
+    await mkdir(psDir, { recursive: true })
+    await writeFile(
+      join(psDir, 'ProjectVersion.txt'), 'm_EditorVersion: 2022.3.17f1'
+    )
+
+    // Set engine in config
+    const configPath = join(testDir, '.uda', 'config.json')
+    const config = JSON.parse(await readFile(configPath, 'utf8'))
+    config.engine = 'unity'
+    await writeFile(configPath, JSON.stringify(config))
+
+    const assetsDir = join(testDir, 'Assets')
+    await mkdir(join(assetsDir, 'Scripts'), { recursive: true })
+    await writeFile(
+      join(assetsDir, 'Scripts', 'Player.cs'),
+      'public class Player : MonoBehaviour { }'
+    )
+
+    const { handleScan } = await import('./scan.js')
+    await handleScan()
+
+    const structurePath = join(
+      testDir, '.uda', 'knowledge', 'project', 'structure.md'
+    )
+    const content = await readFile(structurePath, 'utf8')
+    assert.ok(content.includes('unity'), 'structure.md should mention engine')
+  })
 });

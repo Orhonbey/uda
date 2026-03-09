@@ -1,6 +1,7 @@
 // src/core/project-analyzer.js
 import { readdir, readFile, stat, writeFile, mkdir } from 'fs/promises'
 import { join, dirname, basename } from 'path'
+import { parseCsFile } from './cs-parser.js'
 
 const DEFAULT_SKIP_DIRS = ['node_modules', '.uda', '.git', 'Library', 'Temp', 'Logs', 'obj', '.godot']
 
@@ -212,4 +213,66 @@ export async function generateProjectDocs(root, engine, paths) {
   await writeFile(structurePath, lines.join('\n'), 'utf8')
 
   return analysis
+}
+
+export async function generateCodebaseDocs(root, engine, paths) {
+  if (engine !== 'unity') return null
+
+  const assetsDir = join(root, 'Assets')
+  const csFiles = []
+  await walkDir(assetsDir, async (filePath, fileName) => {
+    if (fileName.endsWith('.cs')) csFiles.push(filePath)
+  })
+
+  if (csFiles.length === 0) return null
+
+  const classes = []
+  for (const filePath of csFiles) {
+    try {
+      const content = await readFile(filePath, 'utf8')
+      const parsed = parseCsFile(content)
+      for (const cls of parsed.classes) {
+        classes.push({
+          ...cls,
+          namespace: parsed.namespace,
+          file: filePath.replace(root + '/', '')
+        })
+      }
+    } catch { /* skip unreadable */ }
+  }
+
+  if (classes.length === 0) return null
+
+  // Group by base class
+  const groups = {}
+  for (const cls of classes) {
+    const group = cls.baseClass || 'Other'
+    if (!groups[group]) groups[group] = []
+    groups[group].push(cls)
+  }
+
+  const lines = ['# Codebase Overview', '', 'Total: ' + classes.length + ' classes/structs', '']
+
+  // Namespaces
+  const namespaces = [...new Set(classes.map(c => c.namespace).filter(Boolean))]
+  if (namespaces.length > 0) {
+    lines.push('## Namespaces')
+    for (const ns of namespaces.sort()) lines.push('- ' + ns)
+    lines.push('')
+  }
+
+  // By base class
+  for (const [group, members] of Object.entries(groups).sort()) {
+    lines.push('## ' + group + ' (' + members.length + ')')
+    for (const cls of members.sort((a, b) => a.name.localeCompare(b.name))) {
+      const loc = cls.namespace ? cls.namespace + '.' + cls.name : cls.name
+      lines.push('- ' + loc + ' -- ' + cls.file)
+    }
+    lines.push('')
+  }
+
+  const projectDir = paths.knowledge.project
+  await mkdir(projectDir, { recursive: true })
+  await writeFile(join(projectDir, 'codebase.md'), lines.join('\n'), 'utf8')
+  return classes.length
 }

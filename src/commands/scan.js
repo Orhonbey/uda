@@ -4,6 +4,8 @@ import { join, relative, extname } from 'path';
 import { RagManager } from '../rag/manager.js';
 import { udaPaths } from '../core/constants.js';
 import { syncPluginsToConfig } from '../core/plugin-sync.js';
+import { loadConfig } from '../core/config.js'
+import { generateProjectDocs, generateCodebaseDocs } from '../core/project-analyzer.js'
 
 export async function handleScan() {
   const root = process.cwd();
@@ -57,6 +59,23 @@ export async function handleScan() {
   }
 
   console.log(`\n✔ Scan complete: ${files.length} files, ${totalChunks} chunks indexed`)
+
+  // Project analysis
+  try {
+    const config = await loadConfig(root)
+    if (config.engine) {
+      console.log('\nAnalyzing project...')
+      const analysis = await generateProjectDocs(root, config.engine, paths)
+      console.log('  structure.md (' + analysis.scriptCount + ' scripts, ' + analysis.scenes.length + ' scenes)')
+
+      const classCount = await generateCodebaseDocs(root, config.engine, paths)
+      if (classCount) {
+        console.log('  codebase.md (' + classCount + ' classes)')
+      }
+    }
+  } catch (err) {
+    console.error('  Project analysis failed: ' + err.message)
+  }
 
   // Update state/current.md
   try {
