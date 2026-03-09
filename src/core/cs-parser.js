@@ -90,7 +90,7 @@ function extractClassBody(content, startIndex) {
  * @returns {string[]}
  */
 function extractPublicMethods(classBody, className) {
-  const methodRegex = /public\s+(?:virtual\s+|override\s+|static\s+|async\s+)*[\w<>\[\],\s]+\s+(\w+)\s*\(/g
+  const methodRegex = /public\s+(?:virtual\s+|override\s+|static\s+|async\s+)*[\w<>\[\],]+(?:\s+[\w<>\[\],]+)*\s+(\w+)\s*\(/g
   const methods = new Set()
   let match
 

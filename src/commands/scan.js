@@ -85,17 +85,19 @@ export async function handleScan(options = {}) {
     }
   }
 
-  // Update state/current.md
-  try {
-    const statePath = paths.state.current
-    const stateContent = `# UDA State
+  // Update state/current.md (skip when analyze-only to preserve RAG stats)
+  if (!options.analyzeOnly) {
+    try {
+      const statePath = paths.state.current
+      const stateContent = `# UDA State
 
 Last Scan: ${new Date().toISOString().split('T')[0]}
 Knowledge Files: ${files.length}
 RAG Chunks: ${totalChunks}
 `
-    await writeFile(statePath, stateContent)
-  } catch { /* non-critical */ }
+      await writeFile(statePath, stateContent)
+    } catch { /* non-critical */ }
+  }
 }
 
 async function collectMdFiles(dir) {

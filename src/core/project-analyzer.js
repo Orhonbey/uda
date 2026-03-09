@@ -1,6 +1,6 @@
 // src/core/project-analyzer.js
-import { readdir, readFile, stat, writeFile, mkdir } from 'fs/promises'
-import { join, dirname, basename } from 'path'
+import { readdir, readFile, writeFile, mkdir } from 'fs/promises'
+import { join, relative } from 'path'
 import { parseCsFile } from './cs-parser.js'
 
 const DEFAULT_SKIP_DIRS = ['node_modules', '.uda', '.git', 'Library', 'Temp', 'Logs', 'obj', '.godot']
@@ -235,7 +235,7 @@ export async function generateCodebaseDocs(root, engine, paths) {
         classes.push({
           ...cls,
           namespace: parsed.namespace,
-          file: filePath.replace(root + '/', '')
+          file: relative(root, filePath)
         })
       }
     } catch { /* skip unreadable */ }
