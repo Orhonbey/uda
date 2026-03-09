@@ -1,7 +1,7 @@
 // src/core/validators.js
 
 const VALID_ENGINES = ['unity', 'godot', 'unreal'];
-const VALID_LEARN_TYPES = ['bug-fix', 'feature', 'pattern', 'knowledge'];
+const VALID_LEARN_TYPES = ['bug-fix', 'feature', 'pattern', 'knowledge', 'project', 'bug'];
 const VALID_EXPORT_FORMATS = ['claude', 'cursor', 'agents-md', 'raw'];
 const VALID_SEARCH_FORMATS = ['terminal', 'md', 'clipboard'];
 

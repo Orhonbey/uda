@@ -1,6 +1,6 @@
 // src/commands/learn.js
-import { resolve, extname } from 'path';
-import { stat, readFile } from 'fs/promises';
+import { resolve, extname, basename, join } from 'path'
+import { stat, readFile, copyFile, mkdir } from 'fs/promises'
 import { RagManager } from '../rag/manager.js';
 import { udaPaths } from '../core/constants.js';
 import { validateLearnType } from '../core/validators.js';
@@ -73,7 +73,16 @@ export async function handleLearn(source, options) {
     const count = await rag.learnFile(sourcePath, {
       type: options.type || 'knowledge',
       tags: options.tags ? options.tags.split(',') : [],
-    });
+    })
+    // Copy to knowledge subdirectory based on type
+    const type = options.type || 'knowledge'
+    if (['project', 'pattern', 'bug'].includes(type)) {
+      const destDir = type === 'project'
+        ? paths.knowledge.project
+        : join(paths.knowledge.project, type === 'pattern' ? 'patterns' : 'bugs')
+      await mkdir(destDir, { recursive: true })
+      await copyFile(sourcePath, join(destDir, basename(sourcePath)))
+    }
     console.log(`✔ Learned ${count} chunks from ${source}`);
   } catch (err) {
     console.error(`✘ Failed to learn from "${source}": ${err.message}`);

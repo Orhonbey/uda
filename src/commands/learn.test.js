@@ -1,7 +1,7 @@
 // src/commands/learn.test.js — Integration tests for handleLearn
 import { describe, it, before, after, beforeEach } from 'node:test';
 import assert from 'node:assert';
-import { mkdtemp, rm, writeFile } from 'fs/promises';
+import { mkdtemp, rm, writeFile, readFile } from 'fs/promises'
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { initProject } from '../core/init.js';
@@ -82,5 +82,44 @@ describe('handleLearn integration', { timeout: 60_000 }, () => {
     await handleLearn(txtFile, {});
     // Should not error — just warns
     assert.notStrictEqual(process.exitCode, 1);
-  });
-});
+  })
+
+  it('copies file to knowledge/project/ with --type project', async () => {
+    const mdFile = join(testDir, 'architecture.md')
+    await writeFile(mdFile, '# Architecture\n\nCharacter system uses ECS pattern.')
+
+    const { handleLearn } = await import('./learn.js')
+    await handleLearn(mdFile, { type: 'project' })
+    assert.notStrictEqual(process.exitCode, 1)
+
+    const destPath = join(paths.knowledge.project, 'architecture.md')
+    const content = await readFile(destPath, 'utf8')
+    assert.ok(content.includes('Character system'))
+  })
+
+  it('copies file to knowledge/project/patterns/ with --type pattern', async () => {
+    const mdFile = join(testDir, 'singleton.md')
+    await writeFile(mdFile, '# Singleton Pattern\n\nUsed in GameManager.')
+
+    const { handleLearn } = await import('./learn.js')
+    await handleLearn(mdFile, { type: 'pattern' })
+    assert.notStrictEqual(process.exitCode, 1)
+
+    const destPath = join(paths.knowledge.project, 'patterns', 'singleton.md')
+    const content = await readFile(destPath, 'utf8')
+    assert.ok(content.includes('Singleton'))
+  })
+
+  it('copies file to knowledge/project/bugs/ with --type bug', async () => {
+    const mdFile = join(testDir, 'null-ref-fix.md')
+    await writeFile(mdFile, '# NullRef in Player\n\nFixed by null check.')
+
+    const { handleLearn } = await import('./learn.js')
+    await handleLearn(mdFile, { type: 'bug' })
+    assert.notStrictEqual(process.exitCode, 1)
+
+    const destPath = join(paths.knowledge.project, 'bugs', 'null-ref-fix.md')
+    const content = await readFile(destPath, 'utf8')
+    assert.ok(content.includes('NullRef'))
+  })
+})
