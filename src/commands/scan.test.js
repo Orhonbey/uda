@@ -105,4 +105,22 @@ describe('handleScan integration', { timeout: 60_000 }, () => {
     const content = await readFile(structurePath, 'utf8')
     assert.ok(content.includes('unity'), 'structure.md should mention engine')
   })
+
+  it('accepts --knowledge-only flag', async () => {
+    const { handleScan } = await import('./scan.js')
+    await handleScan({ knowledgeOnly: true })
+    assert.notStrictEqual(process.exitCode, 1)
+  })
+
+  it('accepts --analyze-only flag', async () => {
+    // Set engine in config for analyze-only to work
+    const configPath = join(testDir, '.uda', 'config.json')
+    const config = JSON.parse(await readFile(configPath, 'utf8'))
+    config.engine = 'unity'
+    await writeFile(configPath, JSON.stringify(config))
+
+    const { handleScan } = await import('./scan.js')
+    await handleScan({ analyzeOnly: true })
+    assert.notStrictEqual(process.exitCode, 1)
+  })
 });

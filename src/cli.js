@@ -54,6 +54,8 @@ export function createCli() {
   program
     .command('scan')
     .description('Scan project and index into RAG')
+    .option('--knowledge-only', 'Only index knowledge files into RAG')
+    .option('--analyze-only', 'Only analyze project structure')
     .action(handleScan);
 
   const pluginCmd = program

@@ -7,74 +7,82 @@ import { syncPluginsToConfig } from '../core/plugin-sync.js';
 import { loadConfig } from '../core/config.js'
 import { generateProjectDocs, generateCodebaseDocs } from '../core/project-analyzer.js'
 
-export async function handleScan() {
+export async function handleScan(options = {}) {
   const root = process.cwd();
   const paths = udaPaths(root);
 
-  let rag;
-  try {
-    rag = new RagManager(paths.rag.lancedb);
-    await rag.init();
-  } catch (err) {
-    console.error(`✘ Failed to initialize RAG engine: ${err.message}`);
-    process.exitCode = 1;
-    return;
-  }
+  let files = []
+  let totalChunks = 0
 
-  // Sync plugins to config (self-healing)
-  try {
-    const syncResult = await syncPluginsToConfig(root)
-    if (syncResult.added.length > 0) {
-      console.log('  Config synced: added ' + syncResult.added.join(', '))
-    }
-  } catch { /* non-critical */ }
-
-  // Scan .uda/knowledge directory
-  const knowledgeDir = paths.knowledge.root;
-  let files;
-  try {
-    files = await collectMdFiles(knowledgeDir);
-  } catch (err) {
-    console.error(`✘ Failed to collect files from knowledge directory: ${err.message}`);
-    process.exitCode = 1;
-    return;
-  }
-
-  if (files.length === 0) {
-    console.log('No markdown files found in knowledge directory.');
-    console.log('  Add .md files to .uda/knowledge/ or install a plugin.');
-    return;
-  }
-
-  let totalChunks = 0;
-  for (const file of files) {
-    const relPath = relative(root, file);
+  // RAG init + Knowledge scan
+  if (!options.analyzeOnly) {
+    let rag;
     try {
-      const count = await rag.learnFile(file, { source: relPath });
-      totalChunks += count;
-      console.log(`  ✔ ${relPath} (${count} chunks)`);
+      rag = new RagManager(paths.rag.lancedb);
+      await rag.init();
     } catch (err) {
-      console.error(`  ✘ Failed to index ${relPath}: ${err.message}`);
+      console.error(`✘ Failed to initialize RAG engine: ${err.message}`);
+      process.exitCode = 1;
+      return;
     }
-  }
 
-  console.log(`\n✔ Scan complete: ${files.length} files, ${totalChunks} chunks indexed`)
+    // Sync plugins to config (self-healing)
+    try {
+      const syncResult = await syncPluginsToConfig(root)
+      if (syncResult.added.length > 0) {
+        console.log('  Config synced: added ' + syncResult.added.join(', '))
+      }
+    } catch { /* non-critical */ }
 
-  // Project analysis
-  try {
-    const config = await loadConfig(root)
-    if (config.engine) {
-      console.log('\nAnalyzing project...')
-      const analysis = await generateProjectDocs(root, config.engine, paths)
-      console.log('  structure.md (' + analysis.scriptCount + ' scripts, ' + analysis.scenes.length + ' scenes)')
+    // Scan .uda/knowledge directory
+    const knowledgeDir = paths.knowledge.root;
+    try {
+      files = await collectMdFiles(knowledgeDir);
+    } catch (err) {
+      console.error(`✘ Failed to collect files from knowledge directory: ${err.message}`);
+      process.exitCode = 1;
+      return;
+    }
 
-      const classCount = await generateCodebaseDocs(root, config.engine, paths)
-      if (classCount) {
-        console.log('  codebase.md (' + classCount + ' classes)')
+    if (files.length === 0) {
+      console.log('No markdown files found in knowledge directory.');
+      console.log('  Add .md files to .uda/knowledge/ or install a plugin.');
+      return;
+    }
+
+    for (const file of files) {
+      const relPath = relative(root, file);
+      try {
+        const count = await rag.learnFile(file, { source: relPath });
+        totalChunks += count;
+        console.log(`  ✔ ${relPath} (${count} chunks)`);
+      } catch (err) {
+        console.error(`  ✘ Failed to index ${relPath}: ${err.message}`);
       }
     }
-  } catch (err) {
-    console.error('  Project analysis failed: ' + err.message)
+
+    console.log(`\n✔ Scan complete: ${files.length} files, ${totalChunks} chunks indexed`)
+  }
+
+  // Project analysis
+  if (!options.knowledgeOnly) {
+    try {
+      const config = await loadConfig(root)
+      if (config.engine) {
+        console.log('\nAnalyzing project...')
+        const analysis = await generateProjectDocs(root, config.engine, paths)
+        console.log('  structure.md (' + analysis.scriptCount + ' scripts, ' + analysis.scenes.length + ' scenes)')
+
+        const classCount = await generateCodebaseDocs(root, config.engine, paths)
+        if (classCount) {
+          console.log('  codebase.md (' + classCount + ' classes)')
+        }
+      } else if (options.analyzeOnly) {
+        console.log('No engine configured. Run: uda config engine <name>')
+      }
+    } catch (err) {
+      console.error('  Project analysis failed: ' + err.message)
+    }
   }
 
   // Update state/current.md
