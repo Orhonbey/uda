@@ -19,6 +19,7 @@ describe('validateEngine', () => {
     assert.deepStrictEqual(validateEngine('unity'), { valid: true });
     assert.deepStrictEqual(validateEngine('godot'), { valid: true });
     assert.deepStrictEqual(validateEngine('unreal'), { valid: true });
+    assert.deepStrictEqual(validateEngine('threejs'), { valid: true });
   });
 
   it('rejects unknown engine name', () => {

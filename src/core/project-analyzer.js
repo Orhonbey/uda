@@ -136,11 +136,71 @@ async function analyzeGodotProject(root) {
   return result
 }
 
+async function analyzeThreejsProject(root) {
+  const result = {
+    engine: 'threejs',
+    engineVersion: null,
+    scriptCount: 0,
+    scenes: [],
+    directories: [],
+    assemblies: []
+  }
+
+  // Read Three.js version from package.json
+  let pkg = null
+  try {
+    const pkgPath = join(root, 'package.json')
+    const pkgContent = await readFile(pkgPath, 'utf8')
+    pkg = JSON.parse(pkgContent)
+  } catch (err) {
+    if (err.code !== 'ENOENT') throw err
+    return result
+  }
+
+  // Check if "three" is a dependency
+  const deps = { ...pkg.dependencies, ...pkg.devDependencies }
+  if (!deps || !deps.three) {
+    return result
+  }
+
+  result.engineVersion = deps.three
+
+  // Walk project to count scripts and find scenes
+  const threejsSkipDirs = ['node_modules', '.uda', '.git', 'dist', 'build']
+  const scriptExts = ['.js', '.html', '.css', '.glsl', '.wgsl']
+
+  await walkDir(root, async (fullPath, fileName) => {
+    const ext = fileName.substring(fileName.lastIndexOf('.'))
+    if (scriptExts.includes(ext)) {
+      result.scriptCount++
+    }
+    if (ext === '.html') {
+      result.scenes.push(fileName)
+    }
+  }, threejsSkipDirs)
+
+  // Get root-level directories
+  try {
+    const entries = await readdir(root, { withFileTypes: true })
+    for (const entry of entries) {
+      if (entry.isDirectory() && !threejsSkipDirs.includes(entry.name)) {
+        result.directories.push(entry.name)
+      }
+    }
+  } catch (err) {
+    if (err.code !== 'ENOENT') throw err
+  }
+
+  return result
+}
+
 export async function analyzeProject(root, engine) {
   if (engine === 'unity') {
     return analyzeUnityProject(root)
   } else if (engine === 'godot') {
     return analyzeGodotProject(root)
+  } else if (engine === 'threejs') {
+    return analyzeThreejsProject(root)
   } else {
     return {
       engine: null,

@@ -3,6 +3,7 @@ import { join } from 'path';
 
 export const DEFAULT_PLUGINS = {
   unity: 'https://github.com/Orhonbey/uda-unity-plugin.git',
+  threejs: 'https://github.com/Orhonbey/uda-threejs-plugin.git',
   // godot: 'https://github.com/SunalSpaciel/uda-godot-plugin.git',
   // unreal: 'https://github.com/SunalSpaciel/uda-unreal-plugin.git',
 };

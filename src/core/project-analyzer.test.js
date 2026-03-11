@@ -83,6 +83,60 @@ describe('project-analyzer', { timeout: 30_000 }, () => {
       }
     })
 
+    it('detects Three.js project structure', async () => {
+      const threejsDir = await mkdtemp(join(tmpdir(), 'uda-threejs-'))
+
+      try {
+        // Create package.json with three dependency
+        await writeFile(
+          join(threejsDir, 'package.json'),
+          JSON.stringify({
+            name: 'my-threejs-game',
+            dependencies: { three: '^0.162.0' }
+          })
+        )
+
+        const srcDir = join(threejsDir, 'src')
+        await mkdir(srcDir, { recursive: true })
+
+        await writeFile(join(srcDir, 'main.js'), 'import * as THREE from "three"')
+        await writeFile(join(srcDir, 'scene.js'), 'export function createScene() {}')
+        await writeFile(join(threejsDir, 'index.html'), '<!DOCTYPE html>')
+        await writeFile(join(srcDir, 'shader.glsl'), 'void main() {}')
+
+        const result = await analyzeProject(threejsDir, 'threejs')
+
+        assert.strictEqual(result.engine, 'threejs')
+        assert.strictEqual(result.engineVersion, '^0.162.0')
+        assert.strictEqual(result.scriptCount, 4)
+        assert.ok(result.scenes.includes('index.html'))
+        assert.ok(result.directories.includes('src'))
+        assert.deepStrictEqual(result.assemblies, [])
+      } finally {
+        await rm(threejsDir, { recursive: true, force: true })
+      }
+    })
+
+    it('returns empty result for threejs project without three dependency', async () => {
+      const noThreeDir = await mkdtemp(join(tmpdir(), 'uda-nothree-'))
+
+      try {
+        await writeFile(
+          join(noThreeDir, 'package.json'),
+          JSON.stringify({ name: 'not-threejs', dependencies: { express: '4.0.0' } })
+        )
+
+        const result = await analyzeProject(noThreeDir, 'threejs')
+
+        assert.strictEqual(result.engine, 'threejs')
+        assert.strictEqual(result.engineVersion, null)
+        assert.strictEqual(result.scriptCount, 0)
+        assert.deepStrictEqual(result.scenes, [])
+      } finally {
+        await rm(noThreeDir, { recursive: true, force: true })
+      }
+    })
+
     it('detects Godot project structure', async () => {
       const godotDir = await mkdtemp(join(tmpdir(), 'uda-godot-'))
 
